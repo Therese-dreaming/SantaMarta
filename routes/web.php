@@ -1,0 +1,129 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ServiceController;
+use Illuminate\Http\Request;
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', function () {
+    return view('home');
+})->name('home');
+
+Route::get('/services', function () {
+    return view('userServices');
+})->name('services');
+
+Route::get('/contact', function () {
+    return view('contact');
+})->name('contact');
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
+
+// Email Verification Routes
+Auth::routes(['verify' => true]);
+
+// Login & Registration
+Route::group(['middleware' => 'guest'], function () {
+    Route::get('/login', function () {
+        return view('login');
+    })->name('login');
+
+    Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+
+    Route::get('/signup', function () {
+        return view('signup');
+    })->name('signup');
+
+    Route::post('/register', [App\Http\Controllers\Auth\RegisterController::class, 'register'])
+        ->name('register');
+});
+
+// Password Reset Routes
+Route::group(['middleware' => 'guest'], function () {
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
+        ->name('password.request');
+
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+        ->name('password.email');
+
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
+        ->name('password.reset');
+
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
+        ->name('password.update');
+});
+
+// Services routes
+Route::get('/services/book', function () {
+    return view('services.book');
+})->name('services.book');
+
+/*
+|--------------------------------------------------------------------------
+| Protected Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
+
+    Route::get('/services/my-bookings', [ServiceController::class, 'myBookings'])->name('services.my-bookings');
+
+    // Payment routes
+    Route::get('/services/payment/{booking}', [ServiceController::class, 'showPayment'])->name('services.payment');
+    Route::post('/services/payment/{booking}', [ServiceController::class, 'storePayment'])->name('services.payment.store');
+});
+
+// Staff and Admin routes
+Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+
+    Route::get('/bookings', [ServiceController::class, 'adminIndex'])->name('admin.bookings');
+    Route::post('/bookings/{booking}/approve', [ServiceController::class, 'approve'])->name('admin.bookings.approve');
+    Route::post('/bookings/{booking}/cancel', [ServiceController::class, 'cancel'])->name('admin.bookings.cancel');
+
+    // Add new admin routes
+    Route::get('/users', function () {
+        return view('admin.users');
+    })->name('admin.users');
+
+    Route::get('/reports', function () {
+        return view('admin.reports');
+    })->name('admin.reports');
+    Route::post('/bookings/{booking}/verify-payment', [ServiceController::class, 'verifyPayment'])
+        ->name('admin.bookings.verify-payment');
+    Route::get('/reports', function () {
+        return view('admin.reports');
+    })->name('admin.reports');
+    Route::post('/bookings/{booking}/hold-for-payment', [ServiceController::class, 'holdForPayment'])
+        ->name('admin.bookings.hold_for_payment');
+});
+
+/*
+// Priest-specific routes
+Route::middleware(['auth', 'role:priest'])->prefix('priest')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('priest.dashboard');
+    })->name('priest.dashboard');
+    
+    Route::get('/services', [ServiceController::class, 'priestIndex'])->name('priest.services');
+});
+*/
