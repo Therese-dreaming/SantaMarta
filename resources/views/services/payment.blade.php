@@ -153,8 +153,6 @@
     </div>
 </div>
 
-<!-- Add this script at the end of the file -->
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('paymentForm');
@@ -295,5 +293,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endpush
 @endsection

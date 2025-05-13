@@ -435,13 +435,18 @@ class ServiceController extends Controller
         session(['booking_step1' => $validated]);
 
         // Redirect to calendar with serviceType parameter
-        // In storeStep1 method
         return redirect()->route('services.calendar', ['serviceType' => $validated['service_type']]);
     }
 
     public function showCalendar($serviceType)
     {
-        return view('services.calendar', compact('serviceType'));
+        // Get approved bookings for this service type
+        $approvedBookings = ServiceBooking::where('type', $serviceType)
+            ->where('status', 'approved')
+            ->select('preferred_date', 'preferred_time', 'status')
+            ->get();
+
+        return view('services.calendar', compact('serviceType', 'approvedBookings'));
     }
 
     public function storeStep2(Request $request)
@@ -463,16 +468,66 @@ class ServiceController extends Controller
     {
         // Combine all session data
         $step1 = session('booking_step1', []);
-        $step2 = session('booking_step2', []);
-        $step3 = $request->all(); // Current form data
+        $step2 = $request->only(['selected_date', 'selected_time']);
 
-        // Create booking with combined data
-        $booking = ServiceBooking::create(array_merge($step1, $step2, $step3));
+        // Generate unique ticket number
+        $prefix = strtoupper(substr($step1['service_type'], 0, 3));
+        $ticketNumber = $prefix . '-' . Str::random(8);
+
+        // Set service prices
+        $servicePrices = [
+            'baptism' => 1000.00,
+            'wedding' => 5000.00,
+            'mass_intention' => 500.00,
+            'blessing' => 1500.00,
+            'confirmation' => 1000.00,
+            'sick_call' => 1000.00
+        ];
+
+        // Create service booking with all required fields
+        $booking = ServiceBooking::create([
+            'user_id' => auth()->id(),
+            'name' => ucfirst($step1['service_type']) . ' Service',
+            'type' => $step1['service_type'],
+            'ticket_number' => $ticketNumber,
+            'preferred_date' => $step2['selected_date'],
+            'preferred_time' => $step2['selected_time'],
+            'notes' => $request->notes,
+            'status' => 'pending',
+            'amount' => $servicePrices[$step1['service_type']]
+        ]);
+
+        // Create service-specific details
+        switch ($step1['service_type']) {
+            case 'mass_intention':
+                MassIntentionDetail::create([
+                    'service_booking_id' => $booking->id,
+                    'mass_type' => $step1['mass_type'],
+                    'mass_names' => $step1['mass_names']
+                ]);
+                break;
+            case 'blessing':
+                BlessingDetail::create([
+                    'service_booking_id' => $booking->id,
+                    'blessing_type' => $step1['blessing_type'],
+                    'blessing_location' => $step1['blessing_location']
+                ]);
+                break;
+            case 'sick_call':
+                SickCallDetail::create([
+                    'service_booking_id' => $booking->id,
+                    'patient_name' => $step1['patient_name'],
+                    'patient_address' => $step1['patient_address'],
+                    'patient_condition' => $step1['patient_condition']
+                ]);
+                break;
+        }
 
         // Clear session data
-        session()->forget(['booking_step1', 'booking_step2']);
+        session()->forget(['booking_step1']);
 
-        return redirect()->route('services.payment', $booking->id);
+        return redirect()->route('services.my-bookings')
+            ->with('success', 'Service booking created successfully. Your ticket number is ' . $ticketNumber);
     }
 
     public function showDocumentUpload(Request $request)
@@ -555,7 +610,53 @@ class ServiceController extends Controller
                     'nationality' => $step1['nationality']
                 ]);
                 break;
-                // Add other service type cases here
+            case 'wedding':
+                WeddingDetail::create([
+                    'service_booking_id' => $serviceBooking->id,
+                    'groom_name' => $step1['groom_name'],
+                    'groom_age' => $step1['groom_age'],
+                    'groom_religion' => $step1['groom_religion'],
+                    'bride_name' => $step1['bride_name'],
+                    'bride_age' => $step1['bride_age'],
+                    'bride_religion' => $step1['bride_religion']
+                ]);
+                break;
+            case 'mass_intention':
+                MassIntentionDetail::create([
+                   'service_booking_id' => $serviceBooking->id,
+                    'mass_type' => $step1['mass_type'],
+                    'mass_names' => $step1['mass_names']
+                ]);
+                break;
+            case 'blessing':
+                BlessingDetail::create([
+                   'service_booking_id' => $serviceBooking->id,
+                    'blessing_type' => $step1['blessing_type'],
+                    'blessing_location' => $step1['blessing_location']
+                ]);
+                break;
+            case 'confirmation':
+                ConfirmationDetail::create([
+                  'service_booking_id' => $serviceBooking->id,
+                    'confirmand_name' => $step1['confirmand_name'],
+                    'confirmand_dob' => $step1['confirmand_dob'],
+                    'baptism_place' => $step1['baptism_place'],
+                    'baptism_date' => $step1['baptism_date'],
+                   'sponsor_name' => $step1['sponsor_name']
+                ]);
+                break;
+            case'sick_call':
+                SickCallDetail::create([
+                  'service_booking_id' => $serviceBooking->id,
+                    'patient_name' => $step1['patient_name'],
+                    'patient_age' => $step1['patient_age'],
+                    'patient_condition' => $step1['patient_condition'],
+                    'location' => $step1['location'],
+                    'room_number' => $step1['room_number'],
+                    'contact_person' => $step1['contact_person'],
+                    'emergency_contact' => $step1['emergency_contact']
+                ]);
+                break;
         }
 
         // Store uploaded documents

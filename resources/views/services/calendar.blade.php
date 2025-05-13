@@ -87,7 +87,7 @@
                     <a href="{{ route('services.book', ['service_type' => session('booking_step1.service_type')]) }}" class="text-gray-600 hover:text-gray-800 flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>Back to Details
                     </a>
-                    <form id="dateTimeForm" action="{{ route('services.store-step2') }}" method="POST" class="inline">
+                    <form id="dateTimeForm" action="{{ in_array($serviceType, ['mass_intention', 'blessing', 'sick_call']) ? route('services.finalize') : route('services.store-step2') }}" method="POST" class="inline">
                         @csrf
                         <input type="hidden" name="service_type" value="{{ $serviceType }}">
                         <input type="hidden" name="selected_date" id="selectedDate">
@@ -96,7 +96,11 @@
                         <input type="hidden" name="understood" value="1">
                         <input type="hidden" name="from_calendar" value="1">
                         <button type="submit" disabled id="continueBtn" class="bg-[#18421F] text-white px-8 py-3 rounded-lg hover:bg-[#18421F]/90 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Continue to Requirements
+                            @if(in_array($serviceType, ['mass_intention', 'blessing', 'sick_call']))
+                                Create Booking
+                            @else
+                                Continue to Requirements
+                            @endif
                         </button>
                     </form>
                 </div>
@@ -202,6 +206,9 @@
         ];
     }
 
+    // Add this at the beginning of the script section, after the serviceType declaration
+    const approvedBookings = @json($approvedBookings ?? []); // We'll pass this from the controller
+    
     // Update the isDateAvailable function
     function isDateAvailable(date) {
         // Check if it's a Catholic holiday
@@ -211,31 +218,55 @@
             holiday.getMonth() === date.getMonth() &&
             holiday.getFullYear() === date.getFullYear()
         );
-
+    
         if (isHoliday) {
             return false;
         }
-
-        // Check service-specific rules
+    
+        // Check if all time slots for this date are occupied
+        const dateString = date.toISOString().split('T')[0];
         const baptismType = '{{ session("booking_step1.baptism_type") }}';
         
-        // Then update the rules check
+        // Get available time slots for this service
         const rules = serviceType === 'baptism' ?
-        (baptismType === 'group' ? serviceRules.baptism.group : serviceRules.baptism.solo) :
-        serviceRules[serviceType];
+            (baptismType === 'group' ? serviceRules.baptism.group : serviceRules.baptism.solo) :
+            serviceRules[serviceType];
 
+        // Get occupied time slots for this date
+        const occupiedTimes = approvedBookings
+            .filter(booking => 
+                booking.preferred_date === dateString && 
+                booking.status === 'approved'
+            )
+            .map(booking => booking.preferred_time);
+
+        // Check if all time slots are occupied
+        const availableSlots = rules.times.filter(time => !occupiedTimes.includes(time));
+        if (availableSlots.length === 0) {
+            return false;
+        }
+    
         return rules.days.includes(date.getDay());
     }
 
+    // Update the getAvailableTimeSlots function
     function getAvailableTimeSlots(date) {
-        const baptismType = '{{ session("booking_step1.baptism_type") }}'; // Add this line
+        const baptismType = '{{ session("booking_step1.baptism_type") }}'; 
         const rules = serviceType === 'baptism' ?
             (baptismType === 'group' ?
                 serviceRules.baptism.group :
                 serviceRules.baptism.solo) :
             serviceRules[serviceType];
 
-        return rules.times;
+        const dateString = date.toISOString().split('T')[0];
+        const occupiedTimes = approvedBookings
+            .filter(booking => 
+                booking.preferred_date === dateString && 
+                booking.status === 'approved'
+            )
+            .map(booking => booking.preferred_time);
+
+        return rules.times.filter(time => !occupiedTimes.includes(time));
     }
 
     // Update the renderCalendar function to properly handle empty cells and selected date
@@ -264,7 +295,27 @@
                 holiday.getMonth() === date.getMonth() &&
                 holiday.getFullYear() === date.getFullYear()
             );
-            const isAvailable = isDateAvailable(date);
+
+            // Check if all time slots are occupied for this date
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const rules = serviceType === 'baptism' ?
+                (baptismType === 'group' ? serviceRules.baptism.group : serviceRules.baptism.solo) :
+                serviceRules[serviceType];
+
+            const occupiedTimes = approvedBookings
+                .filter(booking => 
+                    booking.preferred_date === dateString && 
+                    booking.status.toLowerCase() === 'approved'
+                )
+                .map(booking => booking.preferred_time.split(':').slice(0, 2).join(':'));
+
+            const allSlotsOccupied = rules.times.every(time =>
+                occupiedTimes.some(occupiedTime => 
+                    occupiedTime.toLowerCase() === time.toLowerCase()
+                )
+            );
+
+            const isAvailable = !allSlotsOccupied && rules.days.includes(date.getDay());
             const isToday = date.toDateString() === new Date().toDateString();
             const isPast = date < new Date().setHours(0, 0, 0, 0);
             const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
@@ -275,6 +326,8 @@
                 className += 'bg-gray-100 text-gray-400 cursor-not-allowed';
             } else if (isHoliday) {
                 className += 'bg-yellow-100 border border-yellow-300 text-gray-600 cursor-not-allowed';
+            } else if (allSlotsOccupied) {
+                className += 'bg-red-100 border border-red-300 text-gray-600 cursor-not-allowed';
             } else if (!isAvailable) {
                 className += 'bg-gray-100 text-gray-400 cursor-not-allowed';
             } else if (isSelected) {
@@ -302,7 +355,7 @@
                 cell.appendChild(indicator);
             }
 
-            if (isAvailable && !isPast && !isHoliday) {
+            if (isAvailable && !isPast && !isHoliday && !allSlotsOccupied) {
                 cell.onclick = () => selectDate(date);
             }
 
@@ -327,24 +380,88 @@
         // Show time slots
         showTimeSlots(date);
 
-        // Update hidden input
-        document.getElementById('selectedDate').value = date.toISOString().split('T')[0];
+        // Update hidden input - Use local date string format instead of ISO
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        document.getElementById('selectedDate').value = `${year}-${month}-${day}`;
     }
 
     function showTimeSlots(date) {
-        const timeSlots = getAvailableTimeSlots(date);
+        const baptismType = '{{ session("booking_step1.baptism_type") }}'; 
+        const rules = serviceType === 'baptism' ?
+            (baptismType === 'group' ?
+                serviceRules.baptism.group :
+                serviceRules.baptism.solo) :
+            serviceRules[serviceType];
+    
+        // Use local date string format instead of ISO
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+        
+        // Rest of the function remains the same
+        // Debug each booking's data
+        console.log('All bookings:', approvedBookings);
+        approvedBookings.forEach(booking => {
+            console.log('Booking date comparison:', {
+                'Booking date': booking.preferred_date,
+                'Selected date': dateString,
+                'Dates match': booking.preferred_date === dateString,
+                'Booking status': booking.status,
+                'Status is approved': booking.status.toLowerCase() === 'approved',
+                'Booking time': booking.preferred_time
+            });
+        });
+    
+        const occupiedTimes = approvedBookings
+            .filter(booking => {
+                const isMatch = booking.preferred_date === dateString && 
+                              booking.status.toLowerCase() === 'approved';
+                console.log('Filtering booking:', booking, 'isMatch:', isMatch);
+                return isMatch;
+            })
+            .map(booking => booking.preferred_time.split(':').slice(0, 2).join(':'));
+    
+        console.log('Date selected:', dateString);
+        console.log('Occupied times:', occupiedTimes);
+        console.log('Available rules times:', rules.times);
+    
         const timeSlotsDiv = document.getElementById('timeSlots');
         const timeSlotsGrid = document.getElementById('timeSlotsGrid');
-
+    
         timeSlotsDiv.classList.remove('hidden');
         timeSlotsGrid.innerHTML = '';
-
-        timeSlots.forEach(time => {
+    
+        rules.times.forEach(time => {
             const slot = document.createElement('button');
             slot.type = 'button';
-            slot.className = `p-3 text-center rounded-lg border hover:bg-[#0d5c2f]/10`;
+            // Case-insensitive comparison for time slots
+            const isOccupied = occupiedTimes.some(occupiedTime => 
+                occupiedTime.toLowerCase() === time.toLowerCase()
+            );
+            
+            console.log(`Time slot ${time} - Occupied: ${isOccupied}`, {
+                'Current time': time,
+                'Occupied times': occupiedTimes,
+                'Comparison result': isOccupied
+            });
+            
+            if (isOccupied) {
+                slot.className = 'p-3 text-center rounded-lg border bg-red-100 border-red-300 text-gray-600 cursor-not-allowed';
+                slot.disabled = true;
+                slot.setAttribute('data-occupied', 'true');
+                slot.style.pointerEvents = 'none';
+            } else {
+                slot.className = 'p-3 text-center rounded-lg border hover:bg-[#0d5c2f]/10';
+                slot.onclick = () => {
+                    console.log('Selected available slot:', time);
+                    selectTimeSlot(time, slot);
+                };
+            }
+            
             slot.textContent = time;
-            slot.onclick = () => selectTimeSlot(time, slot);
             timeSlotsGrid.appendChild(slot);
         });
     }

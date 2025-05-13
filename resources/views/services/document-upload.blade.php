@@ -122,6 +122,28 @@
                                 <span id="sponsor_certificate_status" class="text-gray-500">Not uploaded</span>
                             </div>
                             @endif
+                            @if($service_type === 'confirmation')
+                            <div class="flex items-center justify-between text-sm">
+                                <span>Baptismal Certificate</span>
+                                <span id="baptismal_certificate_status" class="text-gray-500">Not uploaded</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span>First Communion Certificate</span>
+                                <span id="communion_certificate_status" class="text-gray-500">Not uploaded</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span>Certificate of Attendance</span>
+                                <span id="attendance_certificate_status" class="text-gray-500">Not uploaded</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span>Birth Certificate</span>
+                                <span id="birth_certificate_status" class="text-gray-500">Not uploaded</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span>Sponsor's Confirmation Certificate</span>
+                                <span id="sponsor_certificate_status" class="text-gray-500">Not uploaded</span>
+                            </div>
+                            @endif
                         </div>
                     </div>
 

@@ -140,7 +140,14 @@
             </button>
         </div>
         <div class="p-6 overflow-y-auto">
-            <div id="serviceContent"></div>
+            <div id="serviceContent">
+                @include('services.partials.baptism-info')
+                @include('services.partials.wedding-info')
+                @include('services.partials.mass-intention-info')
+                @include('services.partials.blessing-info')
+                @include('services.partials.confirmation-info')
+                @include('services.partials.sick-call-info')
+            </div>
         </div>
         <div class="sticky bottom-0 bg-[#0d5c2f] border-t p-6">
             <div class="flex items-start gap-3">
@@ -167,13 +174,6 @@
     </div>
 </div>
 
-@include('services.partials.baptism-info')
-@include('services.partials.wedding-info')
-@include('services.partials.mass-intention-info')
-@include('services.partials.blessing-info')
-@include('services.partials.confirmation-info')
-@include('services.partials.sick-call-info')
-
 <script>
     let selectedService = '';
 
@@ -181,7 +181,6 @@
         selectedService = serviceType;
         const modal = document.getElementById('serviceInfoModal');
         const title = document.getElementById('modalTitle');
-        const content = document.getElementById('serviceContent');
 
         // Hide all service info divs first
         document.querySelectorAll('.service-info').forEach(div => {
@@ -193,7 +192,6 @@
         if (serviceInfo) {
             serviceInfo.classList.remove('hidden');
             title.textContent = serviceType.charAt(0).toUpperCase() + serviceType.slice(1).replace('_', ' ') + ' Service Information';
-            content.innerHTML = serviceInfo.outerHTML;
         }
 
         modal.classList.remove('hidden');
@@ -202,6 +200,7 @@
 
     function closeServiceInfo() {
         const modal = document.getElementById('serviceInfoModal');
+        const content = document.getElementById('serviceContent');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }

@@ -20,7 +20,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ticket #</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Schedule</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -50,9 +50,9 @@
                                 {{ Carbon\Carbon::parse($booking->preferred_time)->format('g:i A') }}
                             </td>
                             <!-- Inside the table row, after the status column -->
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-6 py-4 whitespace-nowrap w-48 text-center">
                                 @if($booking->status === 'payment_on_hold' && $booking->payment_status !== 'paid')
-                                    <div class="flex flex-col items-start gap-2">
+                                    <div class="flex flex-col items-center justify-center gap-2">
                                         <span class="px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                                             Payment On Hold
                                         </span>
