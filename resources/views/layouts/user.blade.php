@@ -18,13 +18,13 @@
                     <span class="ml-3 text-xl font-semibold text-[#0d5c2f]">SANTA MARTA | SAN ROQUE</span>
                 </div>
                 
+                <!-- In the main navigation -->
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="{{ route('home') }}" class="text-gray-600 hover:text-[#0d5c2f] transition-colors">Home</a>
-                    <a href="{{ route('services') }}" class="text-gray-600 hover:text-[#0d5c2f] transition-colors">Services</a>
                     <a href="{{ route('contact') }}" class="text-gray-600 hover:text-[#0d5c2f] transition-colors">Contact</a>
                     
                     @auth
-                        <a href="{{ route('services.book') }}" class="bg-[#0d5c2f] text-white px-6 py-2 rounded-lg hover:bg-[#0d5c2f]/90 transition-colors">Book Now</a>
+                        <a href="{{ route('userServices') }}" class="bg-[#0d5c2f] text-white px-6 py-2 rounded-lg hover:bg-[#0d5c2f]/90 transition-colors">Book Now</a>
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="flex items-center space-x-2 text-gray-600 hover:text-[#0d5c2f]">
                                 <span>{{ Auth::user()->name ?? 'My Account' }}</span>
@@ -47,6 +47,17 @@
                     @endauth
                 </div>
 
+                <!-- In the mobile menu -->
+                <div class="md:hidden" x-show="mobileMenu" @click.away="mobileMenu = false">
+                    <div class="px-2 pt-2 pb-3 space-y-1">
+                        <a href="{{ route('home') }}" class="block px-3 py-2 text-gray-600 hover:text-[#0d5c2f]">Home</a>
+                        <a href="#" class="block px-3 py-2 text-gray-600 hover:text-[#0d5c2f]">Contact</a>
+                        @auth
+                            <a href="{{ route('userServices') }}" class="block px-3 py-2 text-[#0d5c2f] font-medium">Book Now</a>
+                        @endauth
+                    </div>
+                </div>
+                
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
                     <button type="button" class="text-gray-600 hover:text-[#0d5c2f]" @click="mobileMenu = !mobileMenu">
@@ -61,7 +72,6 @@
     <div class="md:hidden" x-show="mobileMenu" @click.away="mobileMenu = false">
         <div class="px-2 pt-2 pb-3 space-y-1">
             <a href="{{ route('home') }}" class="block px-3 py-2 text-gray-600 hover:text-[#0d5c2f]">Home</a>
-            <a href="#" class="block px-3 py-2 text-gray-600 hover:text-[#0d5c2f]">Services</a>
             <a href="#" class="block px-3 py-2 text-gray-600 hover:text-[#0d5c2f]">Contact</a>
             @auth
                 <a href="{{ route('services.book') }}" class="block px-3 py-2 text-[#0d5c2f] font-medium">Book Now</a>

@@ -8,7 +8,27 @@
 <div class="bg-white min-h-screen py-20">
     <div class="container mx-auto px-4">
         <div class="max-w-3xl mx-auto">
-            <h1 class="text-4xl font-bold text-[#0d5c2f] mb-8">Book Church Services</h1>
+            <!-- Step Indicator -->
+            <div class="mb-8">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-[#0d5c2f] text-white flex items-center justify-center">1</div>
+                        <div class="ml-2 text-[#0d5c2f] font-medium">Details</div>
+                    </div>
+                    <div class="w-16 h-1 bg-gray-300"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center">2</div>
+                        <div class="ml-2 text-gray-600 font-medium">Calendar</div>
+                    </div>
+                    <div class="w-16 h-1 bg-gray-300"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center">3</div>
+                        <div class="ml-2 text-gray-600 font-medium">Documents</div>
+                    </div>
+                </div>
+            </div>
+
+            <h1 class="text-4xl font-bold text-[#0d5c2f] mb-8">Service Details</h1>
 
             @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
@@ -27,49 +47,67 @@
             @endif
 
             <div class="bg-white rounded-3xl p-8 shadow-xl">
-                <form action="{{ route('services.store') }}" method="POST">
+                <form action="{{ route('services.store-step1') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
                         <select name="service_type" required class="w-full px-4 py-2 rounded-lg border border-gray-300" onchange="handleServiceTypeChange(this.value)">
                             <option value="">Select a service</option>
-                            <option value="baptism">Baptism - ₱1,000</option>
-                            <option value="wedding">Wedding - ₱5,000</option>
-                            <option value="mass_intention">Mass Intention - ₱500</option>
-                            <option value="blessing">House/Car Blessing - ₱1,500</option>
-                            <option value="confirmation">Confirmation - ₱1,000</option>
-                            <option value="sick_call">Sick Call - ₱1,000</option>
+                            <option value="baptism" {{ session('booking_step1.service_type') == 'baptism' ? 'selected' : '' }}>Baptism - ₱1,000</option>
+                            <option value="wedding" {{ session('booking_step1.service_type') == 'wedding' ? 'selected' : '' }}>Wedding - ₱5,000</option>
+                            <option value="mass_intention" {{ session('booking_step1.service_type') == 'mass_intention' ? 'selected' : '' }}>Mass Intention - ₱500</option>
+                            <option value="blessing" {{ session('booking_step1.service_type') == 'blessing' ? 'selected' : '' }}>House/Car Blessing - ₱1,500</option>
+                            <option value="confirmation" {{ session('booking_step1.service_type') == 'confirmation' ? 'selected' : '' }}>Confirmation - ₱1,000</option>
+                            <option value="sick_call" {{ session('booking_step1.service_type') == 'sick_call' ? 'selected' : '' }}>Sick Call - ₱1,000</option>
                         </select>
+
+                        <!-- Remove the serviceInfoModal div and its related JavaScript -->
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const serviceType = '{{ request("service_type") }}';
+                                if (serviceType) {
+                                    // Set the select element's value
+                                    const serviceSelect = document.querySelector('select[name="service_type"]');
+                                    if (serviceSelect) {
+                                        serviceSelect.value = serviceType;
+                                        // Trigger the change event to show the appropriate form
+                                        handleServiceTypeChange(serviceType);
+                                    }
+                                }
+                            });
+
+                        </script>
                     </div>
 
                     <!-- Dynamic Service Forms -->
                     <div id="baptismForm" class="service-form hidden">
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Child's Name</label>
-                                <input type="text" name="child_name" class="w-full px-4 py-2 rounded-lg border border-gray-300">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Baptism Type</label>
+                                <select name="baptism_type" id="baptismTypeInput" class="w-full px-4 py-2 rounded-lg border border-gray-300" required>
+                                    <option value="">Select Baptism Type</option>
+                                    <option value="group" {{ old('baptism_type', session('booking_step1.baptism_type')) == 'group' ? 'selected' : '' }}>Group Baptism (Sundays at 10:00 AM)</option>
+                                    <option value="solo" {{ old('baptism_type', session('booking_step1.baptism_type')) == 'solo' ? 'selected' : '' }}>Solo Baptism (Tuesday to Saturday)</option>
+                                </select>
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Child's Name</label>
+                                <input type="text" name="child_name" class="w-full px-4 py-2 rounded-lg border border-gray-300" value="{{ old('child_name', session('booking_step1.child_name')) }}"> </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
-                                <input type="date" name="date_of_birth" class="w-full px-4 py-2 rounded-lg border border-gray-300">
-                            </div>
+                                <input type="date" name="date_of_birth" class="w-full px-4 py-2 rounded-lg border border-gray-300" value="{{ old('date_of_birth', session('booking_step1.date_of_birth')) }}"> </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Place of Birth</label>
-                                <input type="text" name="place_of_birth" class="w-full px-4 py-2 rounded-lg border border-gray-300">
-                            </div>
+                                <input type="text" name="place_of_birth" class="w-full px-4 py-2 rounded-lg border border-gray-300" value="{{ old('place_of_birth', session('booking_step1.place_of_birth')) }}"> </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Father's Name</label>
-                                <input type="text" name="father_name" class="w-full px-4 py-2 rounded-lg border border-gray-300">
-                            </div>
+                                <input type="text" name="father_name" class="w-full px-4 py-2 rounded-lg border border-gray-300" value="{{ old('father_name', session('booking_step1.father_name')) }}"> </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Mother's Name</label>
-                                <input type="text" name="mother_name" class="w-full px-4 py-2 rounded-lg border border-gray-300">
-                            </div>
+                                <input type="text" name="mother_name" class="w-full px-4 py-2 rounded-lg border border-gray-300" value="{{ old('mother_name', session('booking_step1.mother_name')) }}"> </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Parents' Nationality</label>
-                                <input type="text" name="nationality" class="w-full px-4 py-2 rounded-lg border border-gray-300">
-                            </div>
+                                <input type="text" name="nationality" class="w-full px-4 py-2 rounded-lg border border-gray-300" value="{{ old('nationality', session('booking_step1.nationality')) }}"> </div>
                         </div>
                     </div>
 
@@ -200,18 +238,8 @@
                     </div>
 
                     <div class="common-fields hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Date</label>
-                        <input type="date" name="preferred_date" required class="w-full px-4 py-2 rounded-lg border border-gray-300">
-                    </div>
-
-                    <div class="common-fields hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Time</label>
-                        <input type="time" name="preferred_time" required class="w-full px-4 py-2 rounded-lg border border-gray-300">
-                    </div>
-
-                    <div class="common-fields hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
-                        <textarea name="notes" rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300"></textarea>
+                        <textarea name="notes" rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300">{{ old('notes', session('booking_step1.notes')) }}</textarea>
                     </div>
 
                     <div class="flex justify-end">
@@ -258,44 +286,38 @@
     </div>
 </div>
 @endauth
+
 <script>
-    // Get the service type from URL parameter
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const serviceType = urlParams.get('type');
-
-        if (serviceType) {
-            const serviceSelect = document.querySelector('select[name="service_type"]');
-            if (serviceSelect) {
-                serviceSelect.value = serviceType;
-                handleServiceTypeChange(serviceType);
-            }
-        }
-    });
-
-    function handleServiceTypeChange(value) {
+    function handleServiceTypeChange(serviceType) {
         // Hide all service forms first
         document.querySelectorAll('.service-form').forEach(form => {
             form.classList.add('hidden');
         });
 
-        // Hide common fields initially
-        document.querySelectorAll('.common-fields').forEach(field => {
-            field.classList.add('hidden');
-        });
-
-        // Show the selected form if a service is selected
-        if (value && value !== '') {
-            const formId = value.includes('mass') ? 'massIntentionForm' : value + 'Form';
-            const selectedForm = document.getElementById(formId);
-            if (selectedForm) {
-                selectedForm.classList.remove('hidden');
-                // Show common fields when a service is selected
-                document.querySelectorAll('.common-fields').forEach(field => {
-                    field.classList.remove('hidden');
-                });
+        // Show the selected service form
+        if (serviceType) {
+            const formId = serviceType.replace('_', '') + 'Form';
+            const form = document.getElementById(formId);
+            if (form) {
+                form.classList.remove('hidden');
             }
+
+            // Show common fields
+            document.querySelectorAll('.common-fields').forEach(field => {
+                field.classList.remove('hidden');
+            });
+        } else {
+            // Hide common fields if no service is selected
+            document.querySelectorAll('.common-fields').forEach(field => {
+                field.classList.add('hidden');
+            });
         }
+    }
+
+    function closeServiceInfoModal() {
+        const modal = document.getElementById('serviceInfoModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 
 </script>

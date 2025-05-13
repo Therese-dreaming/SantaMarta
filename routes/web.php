@@ -19,10 +19,6 @@ Route::get('/', function () {
     return view('home');
 })->name('home');
 
-Route::get('/services', function () {
-    return view('userServices');
-})->name('services');
-
 Route::get('/contact', function () {
     return view('contact');
 })->name('contact');
@@ -68,26 +64,30 @@ Route::group(['middleware' => 'guest'], function () {
 });
 
 // Services routes
-Route::get('/services/book', function () {
-    return view('services.book');
-})->name('services.book');
+// Add this in the public routes section
+Route::get('/services', function () {
+    return view('userServices');
+})->name('userServices');
 
-/*
-|--------------------------------------------------------------------------
-| Protected Routes
-|--------------------------------------------------------------------------
-*/
+// Keep the existing services routes in the auth middleware group
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
-
+    Route::post('/services/store-step1', [ServiceController::class, 'storeStep1'])->name('services.store-step1');
+    Route::post('/services/store-step2', [ServiceController::class, 'storeStep2'])->name('services.store-step2');
+    Route::post('/services/finalize', [ServiceController::class, 'finalizeBooking'])->name('services.finalize');
     Route::get('/services/my-bookings', [ServiceController::class, 'myBookings'])->name('services.my-bookings');
 
     // Payment routes
     Route::get('/services/payment/{booking}', [ServiceController::class, 'showPayment'])->name('services.payment');
     Route::post('/services/payment/{booking}', [ServiceController::class, 'storePayment'])->name('services.payment.store');
+    Route::post('/services/upload-documents', [ServiceController::class, 'uploadDocuments'])->name('services.upload-documents');
+    Route::get('/services/document-upload', [ServiceController::class, 'showDocumentUpload'])->name('services.document-upload');
+    Route::get('/services/calendar/{serviceType}', [ServiceController::class, 'showCalendar'])->name('services.calendar');
+    Route::get('/services/book', [ServiceController::class, 'create'])->name('services.book');
+    Route::post('/services/book', [ServiceController::class, 'store'])->name('services.book.store');
 });
 
 // Staff and Admin routes

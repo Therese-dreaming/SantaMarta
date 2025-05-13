@@ -78,7 +78,7 @@
                                 <div class="flex flex-col items-center">
                                     <i class="fas fa-calendar-xmark text-4xl mb-3"></i>
                                     <p>You don't have any service bookings yet</p>
-                                    <a href="{{ route('services.book') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors duration-150">
+                                    <a href="{{ route('userServices') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors duration-150">
                                         <i class="fas fa-plus mr-2"></i>
                                         Book a Service
                                     </a>

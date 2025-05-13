@@ -14,7 +14,8 @@ class BaptismDetail extends Model
         'place_of_birth',
         'father_name',
         'mother_name',
-        'nationality'
+        'nationality',
+        'baptism_type'
     ];
 
     public function serviceBooking(): BelongsTo

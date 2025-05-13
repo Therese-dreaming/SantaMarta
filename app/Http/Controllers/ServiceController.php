@@ -9,6 +9,7 @@ use App\Models\ConfirmationDetail;
 use App\Models\MassIntentionDetail;
 use App\Models\BlessingDetail;
 use App\Models\SickCallDetail;
+use App\Models\ServiceDocument; // Add this at the top with other use statements
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -26,6 +27,7 @@ class ServiceController extends Controller
         // Service-specific validation rules
         $serviceValidations = [
             'baptism' => [
+                'baptism_type' => 'required|in:group,solo',
                 'child_name' => 'required|string|max:255',
                 'date_of_birth' => 'required|date',
                 'place_of_birth' => 'required|string|max:255',
@@ -103,6 +105,7 @@ class ServiceController extends Controller
             case 'baptism':
                 BaptismDetail::create([
                     'service_booking_id' => $serviceBooking->id,
+                    'baptism_type' => $request->baptism_type,
                     'child_name' => $request->child_name,
                     'date_of_birth' => $request->date_of_birth,
                     'place_of_birth' => $request->place_of_birth,
@@ -131,26 +134,26 @@ class ServiceController extends Controller
                 break;
             case 'blessing':
                 BlessingDetail::create([
-                   'service_booking_id' => $serviceBooking->id,
-                   'blessing_type' => $request->blessing_type,
-                   'blessing_location' => $request->blessing_location
+                    'service_booking_id' => $serviceBooking->id,
+                    'blessing_type' => $request->blessing_type,
+                    'blessing_location' => $request->blessing_location
                 ]);
                 break;
             case 'confirmation':
                 ConfirmationDetail::create([
-                   'service_booking_id' => $serviceBooking->id,
-                   'confirmand_name' => $request->confirmand_name,
-                   'confirmand_dob' => $request->confirmand_dob,
-                   'baptism_place' => $request->baptism_place,
-                   'baptism_date' => $request->baptism_date
+                    'service_booking_id' => $serviceBooking->id,
+                    'confirmand_name' => $request->confirmand_name,
+                    'confirmand_dob' => $request->confirmand_dob,
+                    'baptism_place' => $request->baptism_place,
+                    'baptism_date' => $request->baptism_date
                 ]);
                 break;
             case 'sick_call':
                 SickCallDetail::create([
-                  'service_booking_id' => $serviceBooking->id,
-                   'patient_name' => $request->patient_name,
-                   'patient_address' => $request->patient_address,
-                   'patient_condition' => $request->patient_condition
+                    'service_booking_id' => $serviceBooking->id,
+                    'patient_name' => $request->patient_name,
+                    'patient_address' => $request->patient_address,
+                    'patient_condition' => $request->patient_condition
                 ]);
                 break;
         }
@@ -245,7 +248,7 @@ class ServiceController extends Controller
         $bookings = auth()->user()->serviceBookings()
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-    
+
         return view('services.my-bookings', compact('bookings'));
     }
 
@@ -258,7 +261,7 @@ class ServiceController extends Controller
         if ($booking->user_id !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
-    
+
         // Check if the booking is available for payment
         if (!in_array($booking->status, ['payment_on_hold']) || $booking->payment_status === 'paid') {
             return redirect()->route('services.my-bookings')
@@ -279,16 +282,16 @@ class ServiceController extends Controller
             'reference_number' => 'required|string|max:255',
             'payment_proof' => 'required|image|max:2048' // Max 2MB
         ]);
-    
+
         // Check if the booking belongs to the authenticated user
         if ($booking->user_id !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
-    
+
         // Store the payment proof file
         $paymentProofPath = $request->file('payment_proof')
             ->store('payment-proofs', 'public');
-    
+
         // Update the booking with payment details
         $booking->update([
             'payment_status' => 'paid',
@@ -297,7 +300,7 @@ class ServiceController extends Controller
             'payment_proof' => $paymentProofPath,
             'paid_at' => now()
         ]);
-    
+
         return redirect()->route('services.my-bookings')
             ->with('success', 'Payment submitted successfully. Please wait for confirmation.');
     }
@@ -308,21 +311,21 @@ class ServiceController extends Controller
             'status' => 'required|in:verified,rejected',
             'notes' => 'nullable|string|max:1000'
         ]);
-    
+
         $booking->update([
             'verification_status' => $request->status,
             'verification_notes' => $request->notes,
             'verified_at' => now(),
             'verified_by' => auth()->id()
         ]);
-    
+
         // Update booking status based on verification status
         if ($request->status === 'verified') {
             $booking->update(['status' => 'approved']);
         } else {
             $booking->update(['status' => 'rejected']);
         }
-    
+
         return redirect()->back()->with('success', 'Payment verification updated successfully');
     }
     public function holdForPayment(ServiceBooking $booking)
@@ -330,7 +333,248 @@ class ServiceController extends Controller
         $booking->update([
             'status' => 'payment_on_hold'
         ]);
-    
+
         return redirect()->back()->with('success', 'Service booking is now on hold for payment.');
+    }
+
+    public function showRequirements(Request $request)
+    {
+        // Validate and store the selected date/time
+        $validated = $request->validate([
+            'service_type' => 'required|string',
+            'selected_date' => 'required|date',
+            'selected_time' => 'required|string'
+        ]);
+
+        // Store in session for next step
+        session(['booking_details' => $validated]);
+
+        // Redirect to requirements page (you'll need to create this)
+        return redirect()->route('services.requirements.show');
+    }
+
+    public function create(Request $request)
+    {
+        $serviceType = $request->query('service_type');
+        return view('services.book', [
+            'serviceType' => $serviceType,
+            'understood' => $request->query('understood', 0),
+            'selected_date' => $request->query('selected_date'),
+            'selected_time' => $request->query('selected_time')
+        ]);
+    }
+
+    public function storeStep1(Request $request)
+    {
+        // Base validation rules
+        $rules = [
+            'service_type' => 'required|string',
+            'notes' => 'nullable|string'
+        ];
+
+        // Add service-specific validation rules based on selected service type
+        switch ($request->service_type) {
+            case 'baptism':
+                $rules += [
+                    'baptism_type' => 'required|in:group,solo',
+                    'child_name' => 'required|string|max:255',
+                    'date_of_birth' => 'required|date',
+                    'place_of_birth' => 'required|string|max:255',
+                    'father_name' => 'required|string|max:255',
+                    'mother_name' => 'required|string|max:255',
+                    'nationality' => 'required|string|max:255'
+                ];
+                break;
+            case 'wedding':
+                $rules += [
+                    'groom_name' => 'required|string|max:255',
+                    'groom_age' => 'required|numeric',
+                    'groom_religion' => 'required|string|max:255',
+                    'bride_name' => 'required|string|max:255',
+                    'bride_age' => 'required|numeric',
+                    'bride_religion' => 'required|string|max:255'
+                ];
+                break;
+            case 'mass_intention':
+                $rules += [
+                    'mass_type' => 'required|in:thanksgiving,special_intention,healing,repose_soul',
+                    'mass_names' => 'required|string'
+                ];
+                break;
+            case 'blessing':
+                $rules += [
+                    'blessing_type' => 'required|in:house,car',
+                    'blessing_location' => 'required|string'
+                ];
+                break;
+            case 'confirmation':
+                $rules += [
+                    'confirmand_name' => 'required|string|max:255',
+                    'confirmand_dob' => 'required|date',
+                    'baptism_place' => 'required|string|max:255',
+                    'baptism_date' => 'required|date',
+                    'sponsor_name' => 'required|string|max:255'
+                ];
+                break;
+            case 'sick_call':
+                $rules += [
+                    'patient_name' => 'required|string|max:255',
+                    'patient_age' => 'required|numeric',
+                    'patient_condition' => 'required|string',
+                    'location' => 'required|string|max:255',
+                    'room_number' => 'required|string|max:255',
+                    'contact_person' => 'required|string|max:255',
+                    'emergency_contact' => 'required|string|max:255'
+                ];
+                break;
+        }
+
+        $validated = $request->validate($rules);
+
+        // Store in session
+        session(['booking_step1' => $validated]);
+
+        // Redirect to calendar with serviceType parameter
+        // In storeStep1 method
+        return redirect()->route('services.calendar', ['serviceType' => $validated['service_type']]);
+    }
+
+    public function showCalendar($serviceType)
+    {
+        return view('services.calendar', compact('serviceType'));
+    }
+
+    public function storeStep2(Request $request)
+    {
+        $validated = $request->validate([
+            'service_type' => 'required|string',
+            'selected_date' => 'required|date',
+            'selected_time' => 'required|string'
+        ]);
+
+        // Merge with existing session data
+        session(['booking_step2' => $validated]);
+
+        // Redirect to document upload
+        return redirect()->route('services.document-upload', ['service_type' => $validated['service_type']]);
+    }
+
+    public function finalizeBooking(Request $request)
+    {
+        // Combine all session data
+        $step1 = session('booking_step1', []);
+        $step2 = session('booking_step2', []);
+        $step3 = $request->all(); // Current form data
+
+        // Create booking with combined data
+        $booking = ServiceBooking::create(array_merge($step1, $step2, $step3));
+
+        // Clear session data
+        session()->forget(['booking_step1', 'booking_step2']);
+
+        return redirect()->route('services.payment', $booking->id);
+    }
+
+    public function showDocumentUpload(Request $request)
+    {
+        $serviceType = session('booking_step1.service_type');
+        if (!$serviceType) {
+            return redirect()->route('services.book')
+                ->with('error', 'Please complete the booking details first.');
+        }
+
+        return view('services.document-upload', [
+            'service_type' => $serviceType
+        ]);
+    }
+
+    public function uploadDocuments(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'service_type' => 'required|string',
+            'birth_certificate' => 'required_if:service_type,baptism|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'marriage_certificate' => 'required_if:parents_married,yes|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'baptismal_permit' => 'required_if:other_parish,yes|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'baptismal_cert' => 'required_if:service_type,wedding|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'confirmation_cert' => 'required_if:service_type,wedding|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'cenomar' => 'required_if:service_type,wedding|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'marriage_license' => 'required_if:service_type,wedding|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'baptismal_certificate' => 'required_if:service_type,confirmation|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'communion_certificate' => 'required_if:service_type,confirmation|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'attendance_certificate' => 'required_if:service_type,confirmation|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'sponsor_certificate' => 'required_if:service_type,confirmation|file|mimes:pdf,jpg,jpeg,png|max:5120'
+        ]);
+
+        $step1 = session('booking_step1', []);
+        $step2 = session('booking_step2', []);
+
+        if (empty($step1) || empty($step2)) {
+            return redirect()->route('services.book')
+                ->with('error', 'Please complete the booking details first.');
+        }
+
+        // Generate unique ticket number
+        $prefix = strtoupper(substr($step1['service_type'], 0, 3));
+        $ticketNumber = $prefix . '-' . Str::random(8);
+
+        // Set service prices
+        $servicePrices = [
+            'baptism' => 1000.00,
+            'wedding' => 5000.00,
+            'mass_intention' => 500.00,
+            'blessing' => 1500.00,
+            'confirmation' => 1000.00,
+            'sick_call' => 1000.00
+        ];
+
+        // Create service booking
+        $serviceBooking = ServiceBooking::create([
+            'user_id' => auth()->id(),
+            'name' => ucfirst($step1['service_type']) . ' Service',
+            'type' => $step1['service_type'],
+            'ticket_number' => $ticketNumber,
+            'preferred_date' => $step2['selected_date'],
+            'preferred_time' => $step2['selected_time'],
+            'notes' => $step1['notes'] ?? null,
+            'status' => 'pending',
+            'amount' => $servicePrices[$step1['service_type']]
+        ]);
+
+        // Store service-specific details
+        switch ($step1['service_type']) {
+            case 'baptism':
+                BaptismDetail::create([
+                    'service_booking_id' => $serviceBooking->id,
+                    'baptism_type' => $step1['baptism_type'],
+                    'child_name' => $step1['child_name'],
+                    'date_of_birth' => $step1['date_of_birth'],
+                    'place_of_birth' => $step1['place_of_birth'],
+                    'father_name' => $step1['father_name'],
+                    'mother_name' => $step1['mother_name'],
+                    'nationality' => $step1['nationality']
+                ]);
+                break;
+                // Add other service type cases here
+        }
+
+        // Store uploaded documents
+        foreach ($request->allFiles() as $key => $file) {
+            $path = $file->store('documents/' . $step1['service_type'], 'public');
+            ServiceDocument::create([
+                'user_id' => auth()->id(),  // Add this line
+                'service_type' => $step1['service_type'],  // Add this line
+                'service_booking_id' => $serviceBooking->id,
+                'document_type' => $key,
+                'file_path' => $path,
+                'status' => 'pending'  // Optional, as it defaults to 'pending'
+            ]);
+        }
+
+        // Clear session data
+        session()->forget(['booking_step1', 'booking_step2']);
+
+        return redirect()->route('services.payment', $serviceBooking->id)
+            ->with('success', 'Documents uploaded successfully. Please proceed with payment.');
     }
 }
