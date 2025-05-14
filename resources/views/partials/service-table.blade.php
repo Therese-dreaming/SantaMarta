@@ -81,22 +81,22 @@
 
                         @if($service->payment_status === 'paid' && !($service->status === 'payment_on_hold' && $service->verification_status === 'pending'))
                         <button 
-                            onclick="openBookingDetailsModal({
-                                type: '{{ $service->type }}',
-                                amount: {{ $service->amount }},
-                                payment_method: '{{ $service->payment_method }}',
-                                payment_reference: '{{ $service->payment_reference }}',
-                                payment_proof_url: '{{ asset("storage/" . $service->payment_proof) }}',
-                                verification_status: '{{ $service->verification_status }}',
-                                verified_by_name: '{{ optional($service->verifiedBy)->name }}',
-                                verified_at: '{{ $service->verified_at }}',
-                                verification_notes: '{{ $service->verification_notes }}'
-                            })" 
+                            onclick="openBookingDetailsModal({...})" 
                             class="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150"
                         >
                             <i class="fas fa-eye mr-1"></i>
                             View Details
                         </button>
+
+                        @if($service->status === 'approved' || $service->status === 'completed')
+                        <a 
+                            href="{{ route('admin.bookings.release-document', $service->id) }}" 
+                            class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors duration-150"
+                        >
+                            <i class="fas fa-file-download mr-1"></i>
+                            Release Document
+                        </a>
+                        @endif
                         @endif
                     </div>
                 </td>

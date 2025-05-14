@@ -85,4 +85,51 @@
         </div>
     </div>
 </div>
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-lg flex flex-col items-center shadow-xl max-w-sm w-full mx-4">
+        <div class="relative">
+            <!-- Outer spinning circle -->
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-emerald-200"></div>
+            <!-- Inner spinning circle -->
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-emerald-500 absolute top-0"></div>
+            <!-- Document icon in center -->
+            <svg class="h-8 w-8 text-emerald-500 absolute top-4 left-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+        <p class="text-gray-700 mt-4 font-medium">Generating document...</p>
+        <p class="text-gray-500 text-sm mt-2">This may take a few moments</p>
+    </div>
+</div>
+
 @endsection
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add loading indicator for document release
+    document.querySelectorAll('a[href*="release-document"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.classList.remove('hidden');
+            
+            // Create a download detection iframe
+            const downloadCheck = setInterval(() => {
+                // Check if the document started downloading
+                if (document.cookie.includes('document_download_started')) {
+                    loadingOverlay.classList.add('hidden');
+                    clearInterval(downloadCheck);
+                    // Clear the cookie
+                    document.cookie = 'document_download_started=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                }
+            }, 1000);
+
+            // Fallback - hide overlay after 30 seconds in case something goes wrong
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+                clearInterval(downloadCheck);
+            }, 30000);
+        });
+    });
+});
+</script>

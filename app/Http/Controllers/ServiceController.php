@@ -12,6 +12,8 @@ use App\Models\SickCallDetail;
 use App\Models\ServiceDocument; // Add this at the top with other use statements
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class ServiceController extends Controller
 {
@@ -623,31 +625,31 @@ class ServiceController extends Controller
                 break;
             case 'mass_intention':
                 MassIntentionDetail::create([
-                   'service_booking_id' => $serviceBooking->id,
+                    'service_booking_id' => $serviceBooking->id,
                     'mass_type' => $step1['mass_type'],
                     'mass_names' => $step1['mass_names']
                 ]);
                 break;
             case 'blessing':
                 BlessingDetail::create([
-                   'service_booking_id' => $serviceBooking->id,
+                    'service_booking_id' => $serviceBooking->id,
                     'blessing_type' => $step1['blessing_type'],
                     'blessing_location' => $step1['blessing_location']
                 ]);
                 break;
             case 'confirmation':
                 ConfirmationDetail::create([
-                  'service_booking_id' => $serviceBooking->id,
+                    'service_booking_id' => $serviceBooking->id,
                     'confirmand_name' => $step1['confirmand_name'],
                     'confirmand_dob' => $step1['confirmand_dob'],
                     'baptism_place' => $step1['baptism_place'],
                     'baptism_date' => $step1['baptism_date'],
-                   'sponsor_name' => $step1['sponsor_name']
+                    'sponsor_name' => $step1['sponsor_name']
                 ]);
                 break;
-            case'sick_call':
+            case 'sick_call':
                 SickCallDetail::create([
-                  'service_booking_id' => $serviceBooking->id,
+                    'service_booking_id' => $serviceBooking->id,
                     'patient_name' => $step1['patient_name'],
                     'patient_age' => $step1['patient_age'],
                     'patient_condition' => $step1['patient_condition'],
@@ -677,5 +679,50 @@ class ServiceController extends Controller
 
         return redirect()->route('services.payment', $serviceBooking->id)
             ->with('success', 'Documents uploaded successfully. Please proceed with payment.');
+    }
+
+    public function releaseDocument(ServiceBooking $booking)
+    {
+        // Check if booking is approved/completed
+        if (!in_array($booking->status, ['approved', 'completed'])) {
+            return back()->with('error', 'Cannot generate certificate for unapproved booking.');
+        }
+    
+        // Get the specific service details based on type
+        $details = null;
+        switch ($booking->type) {
+            case 'baptism':
+                $details = $booking->baptismDetail;
+                break;
+            case 'wedding':
+                $details = $booking->weddingDetail;
+                break;
+            case 'confirmation':
+                $details = $booking->confirmationDetail;
+                break;
+                // Add other cases as needed
+        }
+    
+        // Load the appropriate certificate template
+        $view = view('certificates.' . $booking->type, [
+            'booking' => $booking,
+            'details' => $details,
+            'date' => Carbon::now()->format('F d, Y'),
+            'logo1' => public_path('images/LOGO-1.png'),
+            'logo2' => public_path('images/LOGO-2.png')
+        ]);
+    
+        // Generate PDF
+        $pdf = PDF::loadHTML($view->render());
+        $pdf->setPaper('a4', 'landscape');
+    
+        // Generate filename
+        $filename = $booking->type . '_certificate_' . $booking->ticket_number . '.pdf';
+    
+        // Set cookie to track download start
+        cookie()->queue('document_download_started', '1', 1);
+    
+        // Return the PDF for download
+        return $pdf->download($filename);
     }
 }

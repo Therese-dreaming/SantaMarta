@@ -115,6 +115,8 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff
     })->name('admin.reports');
     Route::post('/bookings/{booking}/hold-for-payment', [ServiceController::class, 'holdForPayment'])
         ->name('admin.bookings.hold_for_payment');
+    Route::get('/admin/bookings/{booking}/release-document', [ServiceController::class, 'releaseDocument'])
+        ->name('admin.bookings.release-document');
 });
 
 /*
@@ -127,3 +129,36 @@ Route::middleware(['auth', 'role:priest'])->prefix('priest')->group(function () 
     Route::get('/services', [ServiceController::class, 'priestIndex'])->name('priest.services');
 });
 */
+
+// Only for development/preview - remove or protect in production
+Route::get('/preview-certificate/{type}', function($type) {
+    $sampleData = [
+        'baptism' => [
+            'booking' => new \App\Models\ServiceBooking([
+                'ticket_number' => 'BAP-12345678',
+                'preferred_date' => now(),
+                'status' => 'approved'
+            ]),
+            'details' => new \App\Models\BaptismDetail([
+                'child_name' => 'John Doe',
+                'father_name' => 'Richard Doe',
+                'mother_name' => 'Jane Doe',
+                'date_of_birth' => '2024-01-01',
+                'place_of_birth' => 'Sample City'
+            ])
+        ]
+        // Add sample data for other certificate types here
+    ];
+
+    if (!isset($sampleData[$type])) {
+        abort(404);
+    }
+
+    return view('certificates.' . $type, [
+        'booking' => $sampleData[$type]['booking'],
+        'details' => $sampleData[$type]['details'],
+        'date' => now()->format('F d, Y'),
+        'logo1' => public_path('images/LOGO-1.png'),
+        'logo2' => public_path('images/LOGO-2.png')
+    ]);
+});

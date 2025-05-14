@@ -127,8 +127,8 @@
             }
         }
         , wedding: {
-            days: [1, 2, 3, 4, 5, 6], // Monday to Saturday
-            times: ['10:00', '14:00']
+            days: [0], // Sunday only
+            times: ['14:00'] // 2 PM
         }
         , mass_intention: {
             days: [0, 1, 2, 3, 4, 5, 6], // All days
@@ -275,6 +275,7 @@
         const lastDay = new Date(year, month + 1, 0);
         const startingDay = firstDay.getDay();
         const monthLength = lastDay.getDate();
+        const baptismType = '{{ session("booking_step1.baptism_type") }}'; // Add this line
 
         const calendarGrid = document.getElementById('calendarGrid');
         calendarGrid.innerHTML = '';
