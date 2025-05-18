@@ -51,11 +51,25 @@
                             <span class="ml-3">Dashboard</span>
                         </a>
                     </li>
-                    <li class="relative px-4">
-                        <a href="/admin/bookings" class="flex items-center w-full text-sm font-semibold transition-colors duration-150 text-gray-300 hover:text-white hover:bg-emerald-700/50 px-4 py-3 rounded-lg" :class="{ 'bg-emerald-100 !text-emerald-900': isCurrentPath('/admin/bookings') }">
-                            <i class="fas fa-calendar-alt w-5 h-5"></i>
-                            <span class="ml-3">Bookings</span>
-                        </a>
+                    <li class="relative px-4" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center justify-between w-full text-sm font-semibold transition-colors duration-150 text-gray-300 hover:text-white hover:bg-emerald-700/50 px-4 py-3 rounded-lg" 
+                            :class="{ 'bg-emerald-100 !text-emerald-900': isCurrentPath('/admin/bookings') || isCurrentPath('/admin/calendar') }">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-alt w-5 h-5"></i>
+                                <span class="ml-3">Bookings</span>
+                            </div>
+                            <i class="fas fa-chevron-down w-4 h-4 transition-transform" :class="{ 'transform rotate-180': open }"></i>
+                        </button>
+                        <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" class="mt-2 space-y-1">
+                            <a href="/admin/bookings" class="flex items-center text-sm pl-11 py-2 text-gray-300 hover:text-white hover:bg-emerald-700/50 rounded-lg" :class="{ 'bg-emerald-100 !text-emerald-900': isCurrentPath('/admin/bookings') }">
+                                <i class="fas fa-list-ul w-4 h-4 mr-2"></i>
+                                List View
+                            </a>
+                            <a href="/admin/calendar" class="flex items-center text-sm pl-11 py-2 text-gray-300 hover:text-white hover:bg-emerald-700/50 rounded-lg" :class="{ 'bg-emerald-100 !text-emerald-900': isCurrentPath('/admin/calendar') }">
+                                <i class="fas fa-calendar-week w-4 h-4 mr-2"></i>
+                                Calendar View
+                            </a>
+                        </div>
                     </li>
                     <li class="relative px-4">
                         <a href="/admin/users" class="flex items-center w-full text-sm font-semibold transition-colors duration-150 text-gray-300 hover:text-white hover:bg-emerald-700/50 px-4 py-3 rounded-lg" :class="{ 'bg-emerald-100 !text-emerald-900': isCurrentPath('/admin/users') }">

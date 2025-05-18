@@ -88,6 +88,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/services/calendar/{serviceType}', [ServiceController::class, 'showCalendar'])->name('services.calendar');
     Route::get('/services/book', [ServiceController::class, 'create'])->name('services.book');
     Route::post('/services/book', [ServiceController::class, 'store'])->name('services.book.store');
+    Route::get('/services/payment/{booking}/receipt', [ServiceController::class, 'showPaymentReceipt'])
+    ->name('services.payment.receipt');
+
 });
 
 // Staff and Admin routes
@@ -117,6 +120,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff
         ->name('admin.bookings.hold_for_payment');
     Route::get('/admin/bookings/{booking}/release-document', [ServiceController::class, 'releaseDocument'])
         ->name('admin.bookings.release-document');
+    Route::get('/calendar', [ServiceController::class, 'calendarView'])->name('admin.calendar');
 });
 
 /*

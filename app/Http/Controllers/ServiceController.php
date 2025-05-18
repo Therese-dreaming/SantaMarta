@@ -9,7 +9,10 @@ use App\Models\ConfirmationDetail;
 use App\Models\MassIntentionDetail;
 use App\Models\BlessingDetail;
 use App\Models\SickCallDetail;
-use App\Models\ServiceDocument; // Add this at the top with other use statements
+use App\Models\ServiceDocument;
+use App\Notifications\ServiceBookingNotification;
+use App\Notifications\PaymentConfirmationNotification;
+use App\Notifications\PaymentRequestNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -303,6 +306,9 @@ class ServiceController extends Controller
             'paid_at' => now()
         ]);
 
+        // Send payment confirmation email
+        $booking->user->notify(new PaymentConfirmationNotification($booking));
+
         return redirect()->route('services.my-bookings')
             ->with('success', 'Payment submitted successfully. Please wait for confirmation.');
     }
@@ -335,6 +341,9 @@ class ServiceController extends Controller
         $booking->update([
             'status' => 'payment_on_hold'
         ]);
+
+        // Send email notification to the user
+        $booking->user->notify(new PaymentRequestNotification($booking));
 
         return redirect()->back()->with('success', 'Service booking is now on hold for payment.');
     }
@@ -665,14 +674,17 @@ class ServiceController extends Controller
         foreach ($request->allFiles() as $key => $file) {
             $path = $file->store('documents/' . $step1['service_type'], 'public');
             ServiceDocument::create([
-                'user_id' => auth()->id(),  // Add this line
-                'service_type' => $step1['service_type'],  // Add this line
+                'user_id' => auth()->id(),
+                'service_type' => $step1['service_type'],
                 'service_booking_id' => $serviceBooking->id,
                 'document_type' => $key,
                 'file_path' => $path,
-                'status' => 'pending'  // Optional, as it defaults to 'pending'
+                'status' => 'pending'
             ]);
         }
+
+        // Send email notification
+        auth()->user()->notify(new ServiceBookingNotification($serviceBooking));
 
         // Clear session data
         session()->forget(['booking_step1', 'booking_step2']);
@@ -687,7 +699,7 @@ class ServiceController extends Controller
         if (!in_array($booking->status, ['approved', 'completed'])) {
             return back()->with('error', 'Cannot generate certificate for unapproved booking.');
         }
-    
+
         // Get the specific service details based on type
         $details = null;
         switch ($booking->type) {
@@ -702,7 +714,7 @@ class ServiceController extends Controller
                 break;
                 // Add other cases as needed
         }
-    
+
         // Load the appropriate certificate template
         $view = view('certificates.' . $booking->type, [
             'booking' => $booking,
@@ -711,18 +723,55 @@ class ServiceController extends Controller
             'logo1' => public_path('images/LOGO-1.png'),
             'logo2' => public_path('images/LOGO-2.png')
         ]);
-    
+
         // Generate PDF
         $pdf = PDF::loadHTML($view->render());
         $pdf->setPaper('a4', 'landscape');
-    
+
         // Generate filename
         $filename = $booking->type . '_certificate_' . $booking->ticket_number . '.pdf';
-    
+
         // Set cookie to track download start
         cookie()->queue('document_download_started', '1', 1);
-    
+
         // Return the PDF for download
         return $pdf->download($filename);
+    }
+
+    public function showPaymentReceipt(ServiceBooking $booking)
+    {
+        // Check if the booking belongs to the authenticated user
+        if ($booking->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Check if payment exists
+        if ($booking->payment_status !== 'paid') {
+            return redirect()->route('services.my-bookings')
+                ->with('error', 'No payment receipt available for this booking.');
+        }
+
+        return view('services.payment-receipt', compact('booking'));
+    }
+
+    public function calendarView()
+    {
+        $approvedBookings = ServiceBooking::with('user')
+            ->where('status', 'approved')
+            ->get()
+            ->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'type' => $booking->type,
+                    'ticket_number' => $booking->ticket_number,
+                    'preferred_date' => $booking->preferred_date,
+                    'preferred_time' => $booking->preferred_time,
+                    'user' => [
+                        'name' => $booking->user->name
+                    ]
+                ];
+            });
+
+        return view('admin.calendar', compact('approvedBookings'));
     }
 }
