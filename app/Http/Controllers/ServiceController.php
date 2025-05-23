@@ -757,7 +757,6 @@ class ServiceController extends Controller
     public function calendarView()
     {
         $approvedBookings = ServiceBooking::with('user')
-            ->where('status', 'approved')
             ->get()
             ->map(function ($booking) {
                 return [
@@ -766,6 +765,7 @@ class ServiceController extends Controller
                     'ticket_number' => $booking->ticket_number,
                     'preferred_date' => $booking->preferred_date,
                     'preferred_time' => $booking->preferred_time,
+                    'status' => $booking->status,
                     'user' => [
                         'name' => $booking->user->name
                     ]
