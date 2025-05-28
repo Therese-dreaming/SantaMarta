@@ -73,4 +73,17 @@ class ServiceBooking extends Model
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
+
+    /**
+     * Get the documents for the booking.
+     */
+    public function documents()
+    {
+        return $this->hasMany(ServiceDocument::class, 'service_booking_id');
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'booking_id');
+    }
 }

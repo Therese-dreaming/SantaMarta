@@ -495,7 +495,7 @@ class ServiceController extends Controller
             'sick_call' => 1000.00
         ];
 
-        // Create service booking with all required fields
+        // Create service booking with status explicitly set to pending
         $booking = ServiceBooking::create([
             'user_id' => auth()->id(),
             'name' => ucfirst($step1['service_type']) . ' Service',
@@ -504,7 +504,7 @@ class ServiceController extends Controller
             'preferred_date' => $step2['selected_date'],
             'preferred_time' => $step2['selected_time'],
             'notes' => $request->notes,
-            'status' => 'pending',
+            'status' => 'pending',  // Explicitly set to pending
             'amount' => $servicePrices[$step1['service_type']]
         ]);
 
@@ -756,6 +756,7 @@ class ServiceController extends Controller
 
     public function calendarView()
     {
+        // Get approved bookings
         $approvedBookings = ServiceBooking::with('user')
             ->get()
             ->map(function ($booking) {
@@ -771,7 +772,135 @@ class ServiceController extends Controller
                     ]
                 ];
             });
-
-        return view('admin.calendar', compact('approvedBookings'));
+    
+        // Get all activities from the Activity model
+        $activities = \App\Models\Activity::all()
+            ->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'title' => $activity->title,
+                    'type' => $activity->type,
+                    'date' => $activity->date->format('Y-m-d'),
+                    'start_time' => $activity->start_time,
+                    'end_time' => $activity->end_time,
+                    'block_bookings' => $activity->block_bookings,
+                    'description' => $activity->description ?? '',
+                    'recurrence' => $activity->recurrence ?? null
+                ];
+            });
+    
+        return view('admin.calendar', compact('approvedBookings', 'activities'));
     }
+
+public function adminShowBooking(ServiceBooking $booking)
+{
+    // Load the appropriate details based on booking type
+    $details = null;
+    switch ($booking->type) {
+        case 'baptism':
+            $details = $booking->baptismDetail;
+            break;
+        case 'wedding':
+            $details = $booking->weddingDetail;
+            break;
+        case 'confirmation':
+            $details = $booking->confirmationDetail;
+            break;
+        case 'mass_intention':
+            $details = $booking->massIntentionDetail;
+            break;
+        case 'blessing':
+            $details = $booking->blessingDetail;
+            break;
+        case 'sick_call':
+            $details = $booking->sickCallDetail;
+            break;
+    }
+    
+    // Get uploaded documents using service_booking_id
+    $documents = ServiceDocument::where('service_booking_id', $booking->id)->get();
+    
+    return view('admin.bookings.show', compact('booking', 'details', 'documents'));
+}
+
+public function updateAdminNotes(Request $request, ServiceBooking $booking)
+{
+    $booking->update([
+        'admin_notes' => $request->admin_notes
+    ]);
+    
+    return redirect()->back()->with('success', 'Admin notes updated successfully.');
+}
+
+public function generateCertificate(ServiceBooking $booking)
+{
+    // Check if booking is approved/completed
+    if (!in_array($booking->status, ['approved', 'completed'])) {
+        return back()->with('error', 'Cannot generate certificate for unapproved booking.');
+    }
+
+    // Get the specific service details based on type
+    $details = null;
+    switch ($booking->type) {
+        case 'baptism':
+            $details = $booking->baptismDetail;
+            break;
+        case 'wedding':
+            $details = $booking->weddingDetail;
+            break;
+        case 'confirmation':
+            $details = $booking->confirmationDetail;
+            break;
+        case 'mass_intention':
+            $details = $booking->massIntentionDetail;
+            break;
+        case 'blessing':
+            $details = $booking->blessingDetail;
+            break;
+        case 'sick_call':
+            $details = $booking->sickCallDetail;
+            break;
+    }
+
+    // Load the appropriate certificate template
+    $view = view('certificates.' . $booking->type, [
+        'booking' => $booking,
+        'details' => $details,
+        'date' => Carbon::now()->format('F d, Y'),
+        'logo1' => public_path('images/LOGO-1.png'),
+        'logo2' => public_path('images/LOGO-2.png')
+    ]);
+
+    // Generate PDF
+    $pdf = PDF::loadHTML($view->render());
+    $pdf->setPaper('a4', 'landscape');
+
+    // Generate filename
+    $filename = $booking->type . '_certificate_' . $booking->ticket_number . '.pdf';
+
+    // Return the PDF for download
+    return $pdf->download($filename);
+}
+
+/**
+ * Show the details for a specific booking.
+ */
+public function showBookingDetails(ServiceBooking $booking)
+{
+    // Check if the booking belongs to the authenticated user
+    if ($booking->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        abort(403, 'Unauthorized action.');
+    }
+
+    // Load the service-specific details based on the booking type
+    $detailRelation = $booking->type . 'Detail';
+    if (method_exists($booking, $detailRelation)) {
+        $booking->load($detailRelation);
+    }
+    
+    // Load any documents associated with this booking
+    $booking->load('documents');
+
+    return view('services.booking-details', compact('booking'));
+}
 }

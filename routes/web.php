@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\Auth\UserController;
 use Illuminate\Http\Request;
 
 /*
@@ -91,36 +92,57 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/services/payment/{booking}/receipt', [ServiceController::class, 'showPaymentReceipt'])
     ->name('services.payment.receipt');
 
+    // Service Detail Route
+    // Add this with the other service routes
+    Route::get('/services/booking/{booking}/details', [ServiceController::class, 'showBookingDetails'])->name('services.booking.details');
+    Route::post('/bookings/{booking}/cancel', [ServiceController::class, 'cancel'])->name('bookings.cancel');
+
 });
 
 // Staff and Admin routes
-Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/bookings', [ServiceController::class, 'adminIndex'])->name('admin.bookings');
-    Route::post('/bookings/{booking}/approve', [ServiceController::class, 'approve'])->name('admin.bookings.approve');
-    Route::post('/bookings/{booking}/cancel', [ServiceController::class, 'cancel'])->name('admin.bookings.cancel');
-
+    Route::get('/bookings', [ServiceController::class, 'adminIndex'])->name('bookings');
+    
+    // Fix these routes - make sure they have the 'admin.' prefix in the name
+    Route::post('/bookings/{booking}/approve', [ServiceController::class, 'approve'])->name('bookings.approve');
+    Route::post('/bookings/{booking}/cancel', [ServiceController::class, 'cancel'])->name('bookings.cancel');
+    Route::post('/bookings/{booking}/verify-payment', [ServiceController::class, 'verifyPayment'])
+        ->name('bookings.verify-payment');
+    Route::post('/bookings/{booking}/hold-for-payment', [ServiceController::class, 'holdForPayment'])
+        ->name('bookings.hold_for_payment');
+    Route::get('/bookings/{booking}/release-document', [ServiceController::class, 'releaseDocument'])
+        ->name('bookings.release-document');
+    // Add the missing route for generating certificates
+    Route::get('/bookings/{booking}/generate-certificate', [ServiceController::class, 'generateCertificate'])
+        ->name('bookings.generate-certificate');
+    Route::get('/bookings/{booking}', [ServiceController::class, 'adminShowBooking'])->name('bookings.show');
+    Route::post('/bookings/{booking}/update-notes', [ServiceController::class, 'updateAdminNotes'])
+        ->name('bookings.update-notes');
+    
     // Add new admin routes
     Route::get('/users', function () {
         return view('admin.users');
-    })->name('admin.users');
+    })->name('users');
 
-    Route::get('/reports', function () {
-        return view('admin.reports');
-    })->name('admin.reports');
-    Route::post('/bookings/{booking}/verify-payment', [ServiceController::class, 'verifyPayment'])
-        ->name('admin.bookings.verify-payment');
-    Route::get('/reports', function () {
-        return view('admin.reports');
-    })->name('admin.reports');
-    Route::post('/bookings/{booking}/hold-for-payment', [ServiceController::class, 'holdForPayment'])
-        ->name('admin.bookings.hold_for_payment');
-    Route::get('/admin/bookings/{booking}/release-document', [ServiceController::class, 'releaseDocument'])
-        ->name('admin.bookings.release-document');
-    Route::get('/calendar', [ServiceController::class, 'calendarView'])->name('admin.calendar');
+    // Reports routes
+    // Remove the duplicate /admin prefix
+    Route::get('/reports', [App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('reports');
+    Route::get('/reports/download', [App\Http\Controllers\Admin\ReportsController::class, 'download'])->name('reports.download');
+    
+    Route::get('/calendar', [ServiceController::class, 'calendarView'])->name('calendar');
+
+    // Activity routes
+    Route::get('/activities', 'App\Http\Controllers\ActivityController@index')->name('activities.index');
+    Route::get('/activities/create', 'App\Http\Controllers\ActivityController@create')->name('activities.create');
+    Route::post('/activities', 'App\Http\Controllers\ActivityController@store')->name('activities.store');
+    Route::get('/activities/{activity}/edit', 'App\Http\Controllers\ActivityController@edit')->name('activities.edit');
+    Route::put('/activities/{activity}', 'App\Http\Controllers\ActivityController@update')->name('activities.update');
+    Route::delete('/activities/{activity}', 'App\Http\Controllers\ActivityController@destroy')->name('activities.destroy');
+
+    // User management routes
+    Route::resource('users', 'App\Http\Controllers\Admin\UserController');
 });
 
 /*

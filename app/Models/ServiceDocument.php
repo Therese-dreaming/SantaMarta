@@ -10,6 +10,7 @@ class ServiceDocument extends Model
     protected $fillable = [
         'user_id',
         'service_type',
+        'service_booking_id',
         'document_type',
         'file_path',
         'status',
@@ -36,5 +37,10 @@ class ServiceDocument extends Model
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+    
+    public function serviceBooking()
+    {
+        return $this->belongsTo(ServiceBooking::class, 'service_booking_id');
     }
 }

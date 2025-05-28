@@ -137,6 +137,9 @@
                 <button type="button" onclick="holdForPaymentModal.classList.add('hidden')" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors duration-150">
                     Cancel
                 </button>
+                <button type="button" onclick="rejectBooking()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-150">
+                    Reject
+                </button>
                 <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors duration-150">
                     Confirm
                 </button>
@@ -280,4 +283,28 @@
         });
     });
 
+    function rejectBooking() {
+    const form = document.getElementById('holdForPaymentForm');
+    const actionUrl = form.action.replace('hold-for-payment', 'reject');
+    
+    // Create a new form for the reject action
+    const cancelForm = document.createElement('form');
+    cancelForm.method = 'POST';
+    cancelForm.action = actionUrl;
+    
+    // Add CSRF token from the existing form
+    const csrfToken = form.querySelector('input[name="_token"]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = csrfToken;
+    cancelForm.appendChild(csrfInput);
+    
+    // Submit the form
+    document.body.appendChild(cancelForm);
+    cancelForm.submit();
+    
+    // Hide the modal
+    holdForPaymentModal.classList.add('hidden');
+}
 </script>
