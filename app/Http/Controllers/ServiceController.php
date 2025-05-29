@@ -227,7 +227,13 @@ class ServiceController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.bookings', compact('bookings'));
+        // Calculate counts for each status category
+        $pendingCount = $bookings->where('status', 'pending')->count();
+        $paymentHoldCount = $bookings->where('status', 'payment_on_hold')->where('payment_status', '!=', 'paid')->count();
+        $verifyPaymentCount = $bookings->where('status', 'payment_on_hold')->where('payment_status', 'paid')->count();
+        $approvedCount = $bookings->where('status', 'approved')->count();
+
+        return view('admin.bookings', compact('bookings', 'pendingCount', 'paymentHoldCount', 'verifyPaymentCount', 'approvedCount'));
     }
 
     public function approve(ServiceBooking $booking)
@@ -313,28 +319,27 @@ class ServiceController extends Controller
             ->with('success', 'Payment submitted successfully. Please wait for confirmation.');
     }
 
-    public function verifyPayment(ServiceBooking $booking, Request $request)
+    // Add this method to handle payment verification
+    public function verifyPayment(Request $request, ServiceBooking $booking)
     {
+        // Validate request
         $request->validate([
-            'status' => 'required|in:verified,rejected',
-            'notes' => 'nullable|string|max:1000'
+            'verification_status' => 'required|in:verified,rejected',
+            'verification_notes' => 'nullable|string'
         ]);
-
+    
+        $status = $request->verification_status === 'verified' ? 'approved' : 'cancelled';
+        
+        // Update booking with verification details
         $booking->update([
-            'verification_status' => $request->status,
-            'verification_notes' => $request->notes,
+            'status' => $status,
+            'verification_status' => $request->verification_status,
+            'verification_notes' => $request->verification_notes,
             'verified_at' => now(),
             'verified_by' => auth()->id()
         ]);
-
-        // Update booking status based on verification status
-        if ($request->status === 'verified') {
-            $booking->update(['status' => 'approved']);
-        } else {
-            $booking->update(['status' => 'rejected']);
-        }
-
-        return redirect()->back()->with('success', 'Payment verification updated successfully');
+    
+        return redirect()->back()->with('success', 'Payment verification status updated successfully.');
     }
     public function holdForPayment(ServiceBooking $booking)
     {
@@ -794,6 +799,9 @@ class ServiceController extends Controller
 
 public function adminShowBooking(ServiceBooking $booking)
 {
+    // Load the documents relationship
+    $booking->load('documents');
+
     // Load the appropriate details based on booking type
     $details = null;
     switch ($booking->type) {
@@ -816,11 +824,8 @@ public function adminShowBooking(ServiceBooking $booking)
             $details = $booking->sickCallDetail;
             break;
     }
-    
-    // Get uploaded documents using service_booking_id
-    $documents = ServiceDocument::where('service_booking_id', $booking->id)->get();
-    
-    return view('admin.bookings.show', compact('booking', 'details', 'documents'));
+
+    return view('admin.bookings.show', compact('booking', 'details'));
 }
 
 public function updateAdminNotes(Request $request, ServiceBooking $booking)

@@ -18,6 +18,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css">
     
+    <!-- Link to external CSS for admin booking details page -->
+    <link rel="stylesheet" href="{{ asset('css/admin/booking-show.css') }}">
+
     <!-- Add x-cloak style in the head -->
     <style>
         [x-cloak] { display: none !important; }
@@ -256,6 +259,8 @@
         }
 
     </style>
+
+    @stack('scripts')
 
 </body>
 </html>

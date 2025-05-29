@@ -28,7 +28,7 @@
                                 </div>
                                 <div>
                                     <h3 class="font-semibold text-lg">Address</h3>
-                                    <p class="text-gray-600">123 Church Street<br>San Roque, Antipolo City</p>
+                                    <p class="text-gray-600">B. Morcilla St.,<br>Pateros, Metro Manila</p>
                                 </div>
                             </div>
                             <div class="flex items-start space-x-4">
@@ -37,7 +37,7 @@
                                 </div>
                                 <div>
                                     <h3 class="font-semibold text-lg">Phone</h3>
-                                    <p class="text-gray-600">(123) 456-7890</p>
+                                    <p class="text-gray-600">0917-366-4359</p>
                                 </div>
                             </div>
                             <div class="flex items-start space-x-4">
@@ -46,7 +46,7 @@
                                 </div>
                                 <div>
                                     <h3 class="font-semibold text-lg">Email</h3>
-                                    <p class="text-gray-600">info@santamarta.com</p>
+                                    <p class="text-gray-600">diocesansaintmartha@gmail.com</p>
                                 </div>
                             </div>
                         </div>
@@ -55,14 +55,11 @@
                     <div class = "py-8">
                         <h2 class="text-3xl font-bold text-[#0d5c2f] mb-6">Follow Us</h2>
                         <div class="flex space-x-4">
-                            <a href="#" class="w-12 h-12 flex items-center justify-center bg-[#0d5c2f]/10 rounded-lg hover:bg-[#0d5c2f] group transition-colors">
+                            <a href="https://www.facebook.com/StaMartaYSanRoque" class="w-12 h-12 flex items-center justify-center bg-[#0d5c2f]/10 rounded-lg hover:bg-[#0d5c2f] group transition-colors">
                                 <i class="fab fa-facebook-f text-[#0d5c2f] group-hover:text-white text-2xl transition-colors"></i>
                             </a>
-                            <a href="#" class="w-12 h-12 flex items-center justify-center bg-[#0d5c2f]/10 rounded-lg hover:bg-[#0d5c2f] group transition-colors">
-                                <i class="fab fa-twitter text-[#0d5c2f] group-hover:text-white text-2xl transition-colors"></i>
-                            </a>
-                            <a href="#" class="w-12 h-12 flex items-center justify-center bg-[#0d5c2f]/10 rounded-lg hover:bg-[#0d5c2f] group transition-colors">
-                                <i class="fab fa-instagram text-[#0d5c2f] group-hover:text-white text-2xl transition-colors"></i>
+                            <a href="https://www.youtube.com/channel/UCclt6h0RgU0jv6amSIcBsrA" class="w-12 h-12 flex items-center justify-center bg-[#0d5c2f]/10 rounded-lg hover:bg-[#0d5c2f] group transition-colors">
+                                <i class="fab fa-youtube text-[#0d5c2f] group-hover:text-white text-2xl transition-colors"></i>
                             </a>
                         </div>
                     </div>

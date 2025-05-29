@@ -67,9 +67,15 @@ class UserController extends Controller
     public function show(User $user)
     {
         // Get user's bookings
-        $bookings = $user->serviceBookings()->latest()->get();
+        $allBookings = $user->serviceBookings()->get();
+        $bookings = $user->serviceBookings()->latest()->paginate(5);
         
-        return view('admin.users.show', compact('user', 'bookings'));
+        $totalBookingsCount = $allBookings->count();
+        $totalBookingsAmount = $allBookings->sum('amount');
+        $pendingBookingsCount = $allBookings->where('status', 'pending')->count();
+        $approvedBookingsCount = $allBookings->where('status', 'approved')->count();
+        
+        return view('admin.users.show', compact('user', 'bookings', 'totalBookingsCount', 'totalBookingsAmount', 'pendingBookingsCount', 'approvedBookingsCount', 'allBookings'));
     }
 
     /**

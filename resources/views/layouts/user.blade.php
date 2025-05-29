@@ -97,24 +97,22 @@
                     <ul class="space-y-2">
                         <li><a href="#" class="text-white/80 hover:text-white">Services</a></li>
                         <li><a href="#" class="text-white/80 hover:text-white">Schedule</a></li>
-                        <li><a href="#" class="text-white/80 hover:text-white">Announcements</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="text-xl font-semibold mb-4">Contact</h3>
                     <ul class="space-y-2 text-white/80">
-                        <li>123 Church Street</li>
-                        <li>San Roque, Antipolo City</li>
-                        <li>Phone: (123) 456-7890</li>
-                        <li>Email: info@santamarta.com</li>
+                        <li>B. Morcilla St.,</li>
+                        <li>Pateros, Metro Manila</li>
+                        <li>Phone: 0917-366-4359</li>
+                        <li>Email: diocesansaintmartha@gmail.com</li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="text-xl font-semibold mb-4">Follow Us</h3>
                     <div class="flex space-x-4">
-                        <a href="#" class="text-white/80 hover:text-white"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="text-white/80 hover:text-white"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-white/80 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.facebook.com/StaMartaYSanRoque" class="text-white/80 hover:text-white"><i class="fab fa-facebook"></i></a>
+                        <a href="https://www.youtube.com/channel/UCclt6h0RgU0jv6amSIcBsrA" class="text-white/80 hover:text-white"><i class="fab fa-twitter"></i></a>
                     </div>
                 </div>
             </div>

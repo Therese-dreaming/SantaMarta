@@ -8,6 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ServiceBooking extends Model
 {
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['service_color', 'service_icon'];
+
     protected $fillable = [
         'user_id',
         'name',
@@ -82,8 +89,53 @@ class ServiceBooking extends Model
         return $this->hasMany(ServiceDocument::class, 'service_booking_id');
     }
 
-    public function payment()
+    /**
+     * Get the service color attribute based on the booking type.
+     *
+     * @return string
+     */
+    public function getServiceColorAttribute()
     {
-        return $this->hasOne(Payment::class, 'booking_id');
+        switch ($this->type) {
+            case 'baptism':
+                return 'sky';
+            case 'wedding':
+                return 'rose';
+            case 'mass_intention':
+                return 'indigo';
+            case 'blessing':
+                return 'amber';
+            case 'confirmation':
+                return 'emerald';
+            case 'sick_call':
+                return 'red';
+            default:
+                return 'gray';
+        }
+    }
+
+    /**
+     * Get the service icon attribute based on the booking type.
+     *
+     * @return string
+     */
+    public function getServiceIconAttribute()
+    {
+        switch ($this->type) {
+            case 'baptism':
+                return 'fas fa-water';
+            case 'wedding':
+                return 'fas fa-rings-wedding';
+            case 'mass_intention':
+                return 'fas fa-church';
+            case 'blessing':
+                return 'fas fa-hands-praying';
+            case 'confirmation':
+                return 'fas fa-dove';
+            case 'sick_call':
+                return 'fas fa-hospital-user';
+            default:
+                return 'fas fa-circle';
+        }
     }
 }

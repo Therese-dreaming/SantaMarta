@@ -1,50 +1,49 @@
 <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 font-[Poppins]">
-    <table class="w-full">
+    <table class="w-full text-sm">
         <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ticket #</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service Type</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Requestor</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Schedule</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ticket #</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service Type</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Requestor</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Schedule</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
         </thead>
         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
             @forelse($services as $service)
-            <tr class="service-item hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150" data-status="{{ strtolower($service->status) }}" data-service="{{ str_replace(' ', '_', strtolower($service->type)) }}">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">#{{ $service->ticket_number }}</span>
+            <tr class="service-item hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150" data-status="{{ strtolower($service->status) }}" data-service="{{ str_replace(' ', '_', strtolower($service->type)) }}" data-payment-status="{{ strtolower($service->payment_status ?? '') }}">
+                <td class="px-3 py-2 whitespace-nowrap text-sm">
+                    <span class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full text-sm">#{{ $service->ticket_number }}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-3 py-2 whitespace-nowrap text-sm">
                     <div class="flex items-center">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-800 dark:text-emerald-200 mr-3">
+                        <div class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-800 dark:text-emerald-200 mr-2 text-base">
                             <i class="fas {{ 
                                 $service->type === 'baptism' ? 'fa-water' : 
                                 ($service->type === 'wedding' ? 'fa-rings-wedding' : 
                                 ($service->type === 'mass_intention' ? 'fa-church' : 
                                 ($service->type === 'blessing' ? 'fa-hands-praying' : 
                                 ($service->type === 'confirmation' ? 'fa-dove' : 
-                                ($service->type === 'sick_call' ? 'fa-hospital-user' : 'fa-circle'))))) }}">
-                            </i>
+                                ($service->type === 'sick_call' ? 'fa-hospital-user' : 'fa-circle'))))) }}"></i>
                         </div>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ ucfirst($service->type) }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white text-sm">{{ ucwords(str_replace('_', ' ', $service->type)) }}</span>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-3 py-2 whitespace-nowrap text-sm">
                     <div class="flex items-center">
-                        <div class="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-800 dark:text-emerald-200 font-medium">
+                        <div class="h-6 w-6 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-800 dark:text-emerald-200 font-medium text-xs">
                             {{ substr($service->user->name, 0, 1) }}
                         </div>
-                        <span class="ml-3 font-medium text-gray-900 dark:text-white">{{ $service->user->name }}</span>
+                        <span class="ml-2 font-medium text-gray-900 dark:text-white text-sm">{{ $service->user->name }}</span>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                     {{ Carbon\Carbon::parse($service->preferred_date)->format('M d, Y') }} at
                     {{ Carbon\Carbon::parse($service->preferred_time)->format('g:i A') }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-3 py-1.5 rounded-full text-sm font-medium
+                <td class="px-3 py-2 whitespace-nowrap text-sm">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium
                         {{ $service->status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200' : 
                            ($service->status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' : 
                            ($service->status === 'completed' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 
@@ -53,62 +52,12 @@
                         {{ $service->status === 'payment_on_hold' ? 'Payment On Hold' : ucfirst($service->status) }}
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex gap-3">
-                        @if($service->status === 'pending')
-                        <form action="{{ route('admin.bookings.hold_for_payment', $service->id) }}" method="POST" class="inline">
-                            @csrf
-                            <button type="button" class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-800 transition-colors duration-150 approve-btn">
-                                <i class="fas fa-check"></i>
-                                <span class="ml-1">Hold for Payment</span>
-                            </button>
-                        </form>
-                        @endif
-
-                        @if($service->status === 'payment_on_hold' && $service->payment_status === 'paid' && $service->verification_status === 'pending')
-                        <button onclick="openVerificationModal({{ $service->id }}, '{{ $service->type }}', {{ $service->amount }}, '{{ $service->payment_method }}', '{{ $service->payment_reference }}', '{{ asset("storage/" . $service->payment_proof) }}')" class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors duration-150">
-                            <i class="fas fa-check-circle mr-1"></i>
-                            Verify Payment
-                        </button>
-
-                        @endif
-
-                        @if($service->status === 'payment_on_hold' && $service->payment_status !== 'paid')
-                        <span class="px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                            Waiting for Payment
-                        </span>
-                        @endif
-
-                        @if($service->payment_status === 'paid' && !($service->status === 'payment_on_hold' && $service->verification_status === 'pending'))
-                        <button 
-                            onclick="openBookingDetailsModal({
-                                id: {{ $service->id }},
-                                type: '{{ $service->type }}',
-                                amount: {{ $service->amount }},
-                                payment_method: '{{ $service->payment_method }}',
-                                payment_reference: '{{ $service->payment_reference }}',
-                                payment_proof_url: '{{ asset('storage/' . $service->payment_proof) }}',
-                                verification_status: '{{ $service->verification_status }}',
-                                verified_by_name: '{{ optional($service->verifiedBy)->name ?? 'N/A' }}',
-                                verified_at: '{{ $service->verified_at }}',
-                                verification_notes: '{{ $service->verification_notes ?? 'No notes' }}'
-                            })" 
-                            class="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150"
-                        >
-                            <i class="fas fa-eye mr-1"></i>
-                            View Details
-                        </button>
-
-                        @if($service->status === 'approved' || $service->status === 'completed')
-                        <a 
-                            href="{{ route('admin.bookings.release-document', $service->id) }}" 
-                            class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors duration-150"
-                        >
-                            <i class="fas fa-file-download mr-1"></i>
-                            Release Document
+                <td class="px-3 py-2 whitespace-nowrap text-sm">
+                    <div class="flex gap-2">
+                        <a href="{{ route('admin.bookings.show', $service->id) }}" class="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 text-xs">
+                            <i class="fas fa-eye mr-1 text-xs"></i>
+                            View
                         </a>
-                        @endif
-                        @endif
                     </div>
                 </td>
             </tr>
@@ -126,31 +75,8 @@
     </table>
 </div>
 
-<!-- Hold for Payment Modal -->
-<div id="holdForPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-    <div class="bg-white rounded-lg p-6 w-[400px]">
-        <h3 class="text-xl font-bold mb-4">Confirm Hold for Payment</h3>
-        <p class="text-gray-600 mb-6">Are you sure you want to put this booking on hold for payment?</p>
-        <form id="holdForPaymentForm" method="POST">
-            @csrf
-            <div class="flex justify-end gap-4">
-                <button type="button" onclick="holdForPaymentModal.classList.add('hidden')" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors duration-150">
-                    Cancel
-                </button>
-                <button type="button" onclick="rejectBooking()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-150">
-                    Reject
-                </button>
-                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors duration-150">
-                    Confirm
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 @include('partials.approve-modal')
 @include('partials.cancel-modal')
-@include('partials.verification-modal')
 @include('partials.booking-details-modal')
 
 <script>
@@ -220,7 +146,7 @@
             approveModal.classList.add('flex');
         }
 
-        // Update the action buttons to use modals
+        // Only attach approve modal to .approve-btn
         document.querySelectorAll('.approve-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -231,7 +157,8 @@
             });
         });
 
-        // Modal functions
+        // Remove direct event listener for .hold-for-payment-btn
+        // Use event delegation for all .hold-for-payment-btn (table and cards)
         window.openHoldForPaymentModal = function(bookingId) {
             const form = document.getElementById('holdForPaymentForm');
             form.action = '{{ url("/admin/bookings") }}/' + bookingId + '/hold-for-payment';
@@ -240,14 +167,19 @@
             modal.classList.add('flex');
         }
 
-        // Update the action buttons to use modals
-        document.querySelectorAll('.approve-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+        // Event delegation for hold-for-payment-btn
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.hold-for-payment-btn')) {
                 e.preventDefault();
-                const form = this.closest('form');
+                const btn = e.target.closest('.hold-for-payment-btn');
+                const form = btn.closest('form');
                 const bookingId = form.action.match(/bookings\/(\d+)/)[1];
-                openHoldForPaymentModal(bookingId);
-            });
+                if (typeof openHoldForPaymentModal === 'function') {
+                    openHoldForPaymentModal(bookingId);
+                } else if (window.openHoldForPaymentModal) {
+                    window.openHoldForPaymentModal(bookingId);
+                }
+            }
         });
 
         document.querySelectorAll('.final-approve-btn').forEach(btn => {
@@ -279,32 +211,7 @@
                 const form = this.closest('form');
                 const bookingId = form.action.match(/bookings\/(\d+)/)[1];
                 openCancelModal(bookingId);
-            });
+            }); 
         });
     });
-
-    function rejectBooking() {
-    const form = document.getElementById('holdForPaymentForm');
-    const actionUrl = form.action.replace('hold-for-payment', 'reject');
-    
-    // Create a new form for the reject action
-    const cancelForm = document.createElement('form');
-    cancelForm.method = 'POST';
-    cancelForm.action = actionUrl;
-    
-    // Add CSRF token from the existing form
-    const csrfToken = form.querySelector('input[name="_token"]').value;
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = '_token';
-    csrfInput.value = csrfToken;
-    cancelForm.appendChild(csrfInput);
-    
-    // Submit the form
-    document.body.appendChild(cancelForm);
-    cancelForm.submit();
-    
-    // Hide the modal
-    holdForPaymentModal.classList.add('hidden');
-}
 </script>

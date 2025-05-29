@@ -24,6 +24,26 @@ Route::get('/contact', function () {
     return view('contact');
 })->name('contact');
 
+Route::get('/devotion', function () {
+    return view('devotion');
+})->name('devotion');
+
+Route::get('/ministries', function () {
+    return view('ministries');
+})->name('ministries');
+
+Route::get('/simbahan', function () {
+    return view('simbahan');
+})->name('simbahan');
+
+Route::get('/diyosesis', function () {
+    return view('diyosesis');
+})->name('diyosesis');
+
+Route::get('/kaparian', function () {
+    return view('kaparian');
+})->name('kaparian');
+
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
@@ -96,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
     // Add this with the other service routes
     Route::get('/services/booking/{booking}/details', [ServiceController::class, 'showBookingDetails'])->name('services.booking.details');
     Route::post('/bookings/{booking}/cancel', [ServiceController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/{booking}/generate-certificate', [ServiceController::class, 'generateCertificate'])->name('bookings.generateCertificate');
 
 });
 
@@ -108,8 +129,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff
     // Fix these routes - make sure they have the 'admin.' prefix in the name
     Route::post('/bookings/{booking}/approve', [ServiceController::class, 'approve'])->name('bookings.approve');
     Route::post('/bookings/{booking}/cancel', [ServiceController::class, 'cancel'])->name('bookings.cancel');
-    Route::post('/bookings/{booking}/verify-payment', [ServiceController::class, 'verifyPayment'])
-        ->name('bookings.verify-payment');
+    
+    // Change to:
+    Route::put('/bookings/{booking}/verify-payment', [ServiceController::class, 'verifyPayment'])->name('bookings.verify-payment');
     Route::post('/bookings/{booking}/hold-for-payment', [ServiceController::class, 'holdForPayment'])
         ->name('bookings.hold_for_payment');
     Route::get('/bookings/{booking}/release-document', [ServiceController::class, 'releaseDocument'])
@@ -120,7 +142,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff
     Route::get('/bookings/{booking}', [ServiceController::class, 'adminShowBooking'])->name('bookings.show');
     Route::post('/bookings/{booking}/update-notes', [ServiceController::class, 'updateAdminNotes'])
         ->name('bookings.update-notes');
-    
+
     // Add new admin routes
     Route::get('/users', function () {
         return view('admin.users');
@@ -143,6 +165,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff
 
     // User management routes
     Route::resource('users', 'App\Http\Controllers\Admin\UserController');
+
 });
 
 /*

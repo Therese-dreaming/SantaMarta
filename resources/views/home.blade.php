@@ -94,7 +94,7 @@
                     <img src="{{ asset('images/sacraments.jpg') }}" alt="Sacraments" class="w-full h-full object-cover grayscale">
                     <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
                         <h3 class="text-white text-5xl font-bold mb-4 font-['Rowdies']">SACRAMENTS</h3>
-                        <a href="#" class="text-[#0d5c2f] font-bold bg-white px-6 py-1.5 text-sm rounded-xl">LEARN
+                        <a href="{{ route('userServices') }}" class="text-[#0d5c2f] font-bold bg-white px-6 py-1.5 text-sm rounded-xl">LEARN
                             MORE</a>
                     </div>
                 </div>
@@ -104,7 +104,7 @@
                     <img src="{{ asset('images/devotion.jpg') }}" alt="Devotion" class="w-full h-full object-cover grayscale">
                     <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
                         <h3 class="text-white text-5xl font-bold mb-4 font-['Rowdies']">DEVOTION</h3>
-                        <a href="#" class="text-[#0d5c2f] font-bold bg-white px-6 py-1.5 text-sm rounded-xl">LEARN
+                        <a href="{{ route('devotion') }}" class="text-[#0d5c2f] font-bold bg-white px-6 py-1.5 text-sm rounded-xl">LEARN
                             MORE</a>
                     </div>
                 </div>
@@ -114,7 +114,7 @@
                     <img src="{{ asset('images/ministries.jpg') }}" alt="Ministries" class="w-full h-full object-cover grayscale">
                     <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
                         <h3 class="text-white text-5xl font-bold mb-4 font-['Rowdies']">MINISTRIES</h3>
-                        <a href="#" class="text-[#0d5c2f] font-bold bg-white px-6 py-1.5 text-sm rounded-xl">LEARN
+                        <a href="{{ route('ministries') }}" class="text-[#0d5c2f] font-bold bg-white px-6 py-1.5 text-sm rounded-xl">LEARN
                             MORE</a>
                     </div>
                 </div>
@@ -130,19 +130,19 @@
                     </h2>
                     <div class="space-y-6">
                         <div class="group">
-                            <a href="#" class="bg-white shadow-lg hover:shadow-xl w-full py-4 px-8 text-2xl flex items-center justify-between rounded-lg border border-gray-100 hover:border-[#0d5c2f] transition-all duration-300">
+                            <a href="{{ route('simbahan') }}" class="bg-white shadow-lg hover:shadow-xl w-full py-4 px-8 text-2xl flex items-center justify-between rounded-lg border border-gray-100 hover:border-[#0d5c2f] transition-all duration-300">
                                 <span class="font-['Rowdies'] text-gray-700">ANG PAROKYA</span>
                                 <span class="bg-[#0d5c2f] text-white w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-[#b8860b] transition-colors text-lg leading-none">›</span>
                             </a>
                         </div>
                         <div class="group">
-                            <a href="#" class="bg-white shadow-lg hover:shadow-xl w-full py-4 px-8 text-2xl flex items-center justify-between rounded-lg border border-gray-100 hover:border-[#0d5c2f] transition-all duration-300">
+                            <a href="{{ route('diyosesis') }}" class="bg-white shadow-lg hover:shadow-xl w-full py-4 px-8 text-2xl flex items-center justify-between rounded-lg border border-gray-100 hover:border-[#0d5c2f] transition-all duration-300">
                                 <span class="font-['Rowdies'] text-gray-700">ANG DIYOSESIS</span>
                                 <span class="bg-[#0d5c2f] text-white w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-[#b8860b] transition-colors text-lg leading-none">›</span>
                             </a>
                         </div>
                         <div class="group">
-                            <a href="#" class="bg-white shadow-lg hover:shadow-xl w-full py-4 px-8 text-2xl flex items-center justify-between rounded-lg border border-gray-100 hover:border-[#0d5c2f] transition-all duration-300">
+                            <a href="{{ route('kaparian') }}" class="bg-white shadow-lg hover:shadow-xl w-full py-4 px-8 text-2xl flex items-center justify-between rounded-lg border border-gray-100 hover:border-[#0d5c2f] transition-all duration-300">
                                 <span class="font-['Rowdies'] text-gray-700">ANG KAPARIAN</span>
                                 <span class="bg-[#0d5c2f] text-white w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-[#b8860b] transition-colors text-lg leading-none">›</span>
                             </a>
