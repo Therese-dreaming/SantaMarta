@@ -20,7 +20,7 @@ class LoginController extends Controller
     {
         // Check user role and redirect accordingly
         if (auth()->user()->role === 'admin' || auth()->user()->role === 'staff') {
-            return route('admin.bookings');
+            return route('admin.dashboard');
         }
 
         // Default redirect for regular users

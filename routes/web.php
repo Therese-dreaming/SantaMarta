@@ -123,6 +123,7 @@ Route::middleware(['auth'])->group(function () {
 // Staff and Admin routes
 Route::middleware(['auth', \App\Http\Middleware\CheckRole::class . ':admin,staff'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/chart-data', [App\Http\Controllers\Admin\DashboardController::class, 'chartData'])->name('dashboard.chart-data');
 
     Route::get('/bookings', [ServiceController::class, 'adminIndex'])->name('bookings');
     

@@ -3,271 +3,221 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\ServiceBooking;
 use App\Models\User;
 use App\Models\Activity;
-use Illuminate\Http\Request;
+use App\Models\Ticket;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display the admin dashboard.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        // Get counts for dashboard stats
+        // Get current date ranges
+        $today = Carbon::today();
+        $thisWeek = Carbon::now()->startOfWeek();
+        $thisMonth = Carbon::now()->startOfMonth();
+        $thisYear = Carbon::now()->startOfYear();
+        
+        // Service Bookings Statistics
         $totalBookings = ServiceBooking::count();
         $pendingBookings = ServiceBooking::where('status', 'pending')->count();
+        $approvedBookings = ServiceBooking::where('status', 'approved')->count();
+        $paymentOnHoldBookings = ServiceBooking::where('status', 'payment_on_hold')->count();
         
-        // Fix the today's bookings query - the issue is here
-        // The current query is looking for preferred_date exactly matching today
-        $today = Carbon::today(config('app.timezone'));
-        $todayBookings = ServiceBooking::whereDate('preferred_date', $today)
-            ->where('status', 'approved')
+        // Recent bookings (last 7 days)
+        $recentBookings = ServiceBooking::with('user')
+            ->where('created_at', '>=', $today->copy()->subDays(7))
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+        
+        // Revenue statistics
+        $totalRevenue = ServiceBooking::where('payment_status', 'paid')->sum('amount');
+        $monthlyRevenue = ServiceBooking::where('payment_status', 'paid')
+            ->whereMonth('created_at', $thisMonth->month)
+            ->whereYear('created_at', $thisMonth->year)
+            ->sum('amount');
+        
+        // Service type statistics
+        $serviceTypeStats = ServiceBooking::select('type', DB::raw('count(*) as count'))
+            ->groupBy('type')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [ucfirst(str_replace('_', ' ', $item->type)) => $item->count];
+            });
+        
+        // Monthly booking trends (last 12 months)
+        $monthlyTrends = collect();
+        for ($i = 11; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $count = ServiceBooking::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+            $monthlyTrends->push([
+                'month' => $date->format('M Y'),
+                'short_month' => $date->format('M'),
+                'count' => $count
+            ]);
+        }
+        
+        // Weekly booking trends (last 8 weeks)
+        $weeklyTrends = collect();
+        for ($i = 7; $i >= 0; $i--) {
+            $startOfWeek = Carbon::now()->subWeeks($i)->startOfWeek();
+            $endOfWeek = Carbon::now()->subWeeks($i)->endOfWeek();
+            $count = ServiceBooking::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
+            $weeklyTrends->push([
+                'week' => $startOfWeek->format('M d') . ' - ' . $endOfWeek->format('M d'),
+                'count' => $count
+            ]);
+        }
+        
+        // Daily bookings for current month
+        $dailyTrends = collect();
+        $daysInMonth = $thisMonth->daysInMonth;
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = $thisMonth->copy()->day($day);
+            if ($date->lte(Carbon::now())) {
+                $count = ServiceBooking::whereDate('created_at', $date)->count();
+                $dailyTrends->push([
+                    'day' => $date->format('M d'),
+                    'count' => $count
+                ]);
+            }
+        }
+        
+        // Revenue trends (last 6 months)
+        $revenueTrends = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $revenue = ServiceBooking::where('payment_status', 'paid')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->sum('amount');
+            $revenueTrends->push([
+                'month' => $date->format('M Y'),
+                'short_month' => $date->format('M'),
+                'revenue' => $revenue
+            ]);
+        }
+        
+        // User statistics
+        $totalUsers = User::where('role', '!=', 'admin')->count();
+        $newUsersThisMonth = User::where('role', '!=', 'admin')
+            ->whereMonth('created_at', $thisMonth->month)
+            ->whereYear('created_at', $thisMonth->year)
             ->count();
         
-        $totalUsers = User::count();
-
-        // Get recent bookings
-        $recentBookings = ServiceBooking::latest()->take(5)->get();
-
-        // Get upcoming events/activities - using 'date' instead of 'event_date'
-        $upcomingEvents = Activity::where('date', '>=', Carbon::today())
-            ->with('user')  // Eager load the user relationship
-            ->orderBy('date')
-            ->take(5)
+        // Upcoming activities
+        $upcomingActivities = Activity::where('date', '>=', $today)
+            ->orderBy('date', 'asc')
+            ->limit(5)
             ->get();
-
-        // Get service type distribution - using 'type' instead of 'service_type'
-        $baptismCount = ServiceBooking::where('type', 'baptism')->count();
-        $weddingCount = ServiceBooking::where('type', 'wedding')->count();
-        $funeralCount = ServiceBooking::where('type', 'funeral')->count();
-        $confirmationCount = ServiceBooking::where('type', 'confirmation')->count();
-        $massIntentionCount = ServiceBooking::where('type', 'mass_intention')->count();
-
-        // Calculate financial data
-        $totalRevenue = ServiceBooking::where('status', 'approved')->sum('amount');
-        $monthlyRevenue = ServiceBooking::where('status', 'approved')
-            ->whereMonth('preferred_date', Carbon::now()->month)
-            ->whereYear('preferred_date', Carbon::now()->year)
-            ->sum('amount');
-
-        // Calculate monthly revenue for the last 6 months
-        $monthlyRevenueData = $this->getMonthlyRevenueData();
         
-        // Calculate revenue by service type
-        $revenueByServiceType = $this->getRevenueByServiceType();
+        // Recent tickets if the Ticket model exists
+        $recentTickets = collect();
+        if (class_exists('App\Models\Ticket')) {
+            $recentTickets = Ticket::with('user')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+        }
         
-        // Calculate booking completion rate
-        $bookingCompletionRate = $this->getBookingCompletionRate();
+        // Payment verification queue
+        $paymentsToVerify = ServiceBooking::where('status', 'payment_on_hold')
+            ->where('payment_status', 'paid')
+            ->count();
         
-        // Calculate peak booking times
-        $peakBookingTimes = $this->getPeakBookingTimes();
+        // Today's approved bookings
+        $todaysBookings = ServiceBooking::whereDate('preferred_date', $today)
+            ->where('status', 'approved')
+            ->with('user')
+            ->get();
         
-        // Calculate user registration trends
-        $userRegistrationTrends = $this->getUserRegistrationTrends();
-        
-        // Calculate year-over-year growth
-        $yearOverYearGrowth = $this->getYearOverYearGrowth();
-
         return view('admin.dashboard', compact(
             'totalBookings',
-            'pendingBookings',
-            'todayBookings',
-            'totalUsers',
+            'pendingBookings', 
+            'approvedBookings',
+            'paymentOnHoldBookings',
             'recentBookings',
-            'upcomingEvents',
-            'baptismCount',
-            'weddingCount',
-            'funeralCount',
-            'confirmationCount',
-            'massIntentionCount',
             'totalRevenue',
             'monthlyRevenue',
-            'monthlyRevenueData',
-            'revenueByServiceType',
-            'bookingCompletionRate',
-            'peakBookingTimes',
-            'userRegistrationTrends',
-            'yearOverYearGrowth'
+            'serviceTypeStats',
+            'monthlyTrends',
+            'weeklyTrends',
+            'dailyTrends',
+            'revenueTrends',
+            'totalUsers',
+            'newUsersThisMonth',
+            'upcomingActivities',
+            'recentTickets',
+            'paymentsToVerify',
+            'todaysBookings'
         ));
     }
 
-    /**
-     * Get monthly revenue for a specific month and year
-     *
-     * @param int $month
-     * @param int $year
-     * @return float
-     */
-    private function getMonthlyRevenue($month, $year)
+    public function chartData()
     {
-        return ServiceBooking::where('status', 'approved')
-            ->whereMonth('preferred_date', $month)
-            ->whereYear('preferred_date', $year)
-            ->sum('amount');
-    }
+        $today = Carbon::today();
+        $thisMonth = Carbon::now()->startOfMonth();
 
-    /**
-     * Get monthly revenue data for the last 6 months
-     *
-     * @return array
-     */
-    private function getMonthlyRevenueData()
-    {
-        $data = [];
-        $labels = [];
-        
-        // Get data for the last 6 months
+        // Bookings Trend (last 6 months)
+        $bookingsTrend = collect();
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
-            $month = $date->month;
-            $year = $date->year;
-            
-            $revenue = $this->getMonthlyRevenue($month, $year);
-            $data[] = $revenue;
-            $labels[] = $date->format('M Y');
-        }
-        
-        return [
-            'labels' => $labels,
-            'data' => $data
-        ];
-    }
-
-    /**
-     * Get revenue breakdown by service type
-     *
-     * @return array
-     */
-    private function getRevenueByServiceType()
-    {
-        $serviceTypes = ['baptism', 'wedding', 'funeral', 'confirmation', 'mass_intention'];
-        $revenueByType = [];
-        
-        foreach ($serviceTypes as $type) {
-            $revenueByType[ucfirst(str_replace('_', ' ', $type))] = ServiceBooking::where('type', $type)
-                ->where('status', 'approved')
-                ->sum('amount');
-        }
-        
-        return $revenueByType;
-    }
-
-    /**
-     * Get booking completion rate statistics
-     *
-     * @return array
-     */
-    private function getBookingCompletionRate()
-    {
-        $approved = ServiceBooking::where('status', 'approved')->count();
-        $pending = ServiceBooking::where('status', 'pending')->count();
-        $cancelled = ServiceBooking::where('status', 'cancelled')->count();
-        $total = $approved + $pending + $cancelled;
-        
-        $approvalRate = $total > 0 ? round(($approved / $total) * 100) : 0;
-        
-        return [
-            'approved' => $approved,
-            'pending' => $pending,
-            'cancelled' => $cancelled,
-            'approval_rate' => $approvalRate
-        ];
-    }
-
-    /**
-     * Get peak booking times by day of week
-     *
-     * @return array
-     */
-    private function getPeakBookingTimes()
-    {
-        $bookingsByDay = [
-            'Sunday' => 0,
-            'Monday' => 0,
-            'Tuesday' => 0,
-            'Wednesday' => 0,
-            'Thursday' => 0,
-            'Friday' => 0,
-            'Saturday' => 0
-        ];
-        
-        // Get all bookings with a preferred date
-        $bookings = ServiceBooking::whereNotNull('preferred_date')->get();
-        
-        foreach ($bookings as $booking) {
-            $dayOfWeek = Carbon::parse($booking->preferred_date)->format('l');
-            $bookingsByDay[$dayOfWeek]++;
-        }
-        
-        return $bookingsByDay;
-    }
-
-    /**
-     * Get user registration trends for the last 6 months
-     *
-     * @return array
-     */
-    private function getUserRegistrationTrends()
-    {
-        $data = [];
-        $labels = [];
-        
-        // Get data for the last 6 months
-        for ($i = 5; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i);
-            $month = $date->month;
-            $year = $date->year;
-            
-            $count = User::whereMonth('created_at', $month)
-                ->whereYear('created_at', $year)
+            $count = ServiceBooking::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
                 ->count();
-                
-            $data[] = $count;
-            $labels[] = $date->format('M Y');
+            $bookingsTrend->push([
+                'month' => $date->format('M'),
+                'count' => $count
+            ]);
         }
-        
-        return [
-            'labels' => $labels,
-            'data' => $data
-        ];
-    }
 
-    /**
-     * Calculate year-over-year growth for key metrics
-     *
-     * @return array
-     */
-    private function getYearOverYearGrowth()
-    {
-        // Calculate revenue growth
-        $thisYearRevenue = ServiceBooking::where('status', 'approved')
-            ->whereYear('preferred_date', Carbon::now()->year)
-            ->sum('amount');
-            
-        $lastYearRevenue = ServiceBooking::where('status', 'approved')
-            ->whereYear('preferred_date', Carbon::now()->subYear()->year)
-            ->sum('amount');
-            
-        $revenueGrowth = $lastYearRevenue > 0 
-            ? round((($thisYearRevenue - $lastYearRevenue) / $lastYearRevenue) * 100) 
-            : 100;
-            
-        // Calculate booking growth
-        $thisYearBookings = ServiceBooking::whereYear('created_at', Carbon::now()->year)->count();
-        $lastYearBookings = ServiceBooking::whereYear('created_at', Carbon::now()->subYear()->year)->count();
-        
-        $bookingGrowth = $lastYearBookings > 0 
-            ? round((($thisYearBookings - $lastYearBookings) / $lastYearBookings) * 100) 
-            : 100;
-            
-        return [
-            'revenue_growth' => $revenueGrowth,
-            'booking_growth' => $bookingGrowth
-        ];
+        // User Growth (last 6 months)
+        $userGrowth = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $count = User::where('role', '!=', 'admin')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+            $userGrowth->push([
+                'month' => $date->format('M'),
+                'count' => $count
+            ]);
+        }
+
+        // Revenue Trend (last 6 months)
+        $revenueTrend = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $revenue = ServiceBooking::where('payment_status', 'paid')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->sum('amount');
+            $revenueTrend->push([
+                'month' => $date->format('M'),
+                'revenue' => $revenue
+            ]);
+        }
+
+        // Service Type Pie
+        $serviceTypeStats = ServiceBooking::select('type', DB::raw('count(*) as count'))
+            ->groupBy('type')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [ucfirst(str_replace('_', ' ', $item->type)) => $item->count];
+            });
+
+        return response()->json([
+            'bookingsTrend' => $bookingsTrend,
+            'userGrowth' => $userGrowth,
+            'revenueTrend' => $revenueTrend,
+            'serviceTypeStats' => $serviceTypeStats,
+        ]);
     }
 }

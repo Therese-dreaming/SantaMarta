@@ -3,15 +3,22 @@
 @section('title', 'Parochial Activities')
 
 @section('content')
-<div class="container px-6 mx-auto py-8">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 class="text-2xl font-semibold text-gray-700 dark:text-gray-200">Parochial Activities</h1>
-        <div class="flex gap-3">
-            <a href="{{ route('admin.calendar') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 px-4 py-2 rounded-lg flex items-center">
-                <i class="fas fa-calendar-alt mr-2"></i> Calendar View
+<div class="container px-4 mx-auto py-6">
+    <!-- Compact Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center">
+                <i class="fas fa-calendar-check text-emerald-600 mr-3"></i>
+                Parochial Activities
+            </h1>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage church activities and schedules</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.calendar') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <i class="fas fa-calendar-alt mr-1.5"></i> Calendar
             </a>
-            <a href="{{ route('admin.activities.create') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center">
-                <i class="fas fa-plus mr-2"></i> Add New Activity
+            <a href="{{ route('admin.activities.create') }}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors">
+                <i class="fas fa-plus mr-1.5"></i> Add Activity
             </a>
         </div>
     </div>
@@ -140,14 +147,19 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($activity->block_bookings)
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                            <i class="fas fa-ban mr-1"></i> Blocked
+                                        <span class="px-2 inline-flex text-xs font-bold rounded-full bg-red-200 text-red-900 dark:bg-red-800 dark:text-red-100 font-sans tracking-wide uppercase">
+                                            Blocked
                                         </span>
                                     @else
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                            <i class="fas fa-check mr-1"></i> Allowed
+                                        <span class="px-2 inline-flex text-xs font-bold rounded-full bg-green-200 text-green-900 dark:bg-green-800 dark:text-green-100 font-sans tracking-wide uppercase">
+                                            Allowed
                                         </span>
                                     @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $activity->user ? $activity->user->name : 'System' }}
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-3">

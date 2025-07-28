@@ -6,13 +6,13 @@
 <div class="container mx-auto px-4 py-6 font-sans">
     <!-- Back button with improved styling -->
     <div class="mb-6 flex justify-between items-center">
-        <a href="{{ route('admin.bookings') }}" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200">
+        <a href="{{ route('admin.bookings') }}" class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 font-semibold">
             <i class="fas fa-arrow-left mr-2"></i> Back to Bookings List
         </a>
         
         <!-- Admin Actions Dropdown -->
         <div class="relative" x-data="{ open: false }">
-            <button @click="open = !open" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+            <button @click="open = !open" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 font-semibold">
                 <i class="fas fa-cog mr-2"></i> Actions
                 <svg class="w-5 h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -20,7 +20,13 @@
             </button>
             <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-10" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
                 <div class="py-1" role="none">
-                    <!-- Conditional Actions -->
+                    <!-- Email User - Available for all booking statuses -->
+                    <button type="button" onclick="openEmailModal({{ $booking->id }})" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-envelope mr-2 text-blue-500"></i>
+                        Email User
+                    </button>
+                    
+                    <!-- Conditional Actions for pending status -->
                     @if($booking->status === 'pending')
                         <button type="button" onclick="openHoldForPaymentModal({{ $booking->id }})" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                             <i class="fas fa-pause-circle mr-2 text-yellow-500"></i>
@@ -74,21 +80,20 @@
     </div>
 
     <!-- Main content card with improved shadow and rounded corners -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
         <!-- Header with service type color - Enhanced with larger icon and better spacing -->
-        <div class="{{
+        <div class="p-8 {{
             $booking->type === 'baptism' ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200' :
             ($booking->type === 'wedding' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200' :
             ($booking->type === 'mass_intention' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' :
             ($booking->type === 'blessing' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' :
             ($booking->type === 'confirmation' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' :
-            ($booking->type === 'sick_call' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'))))) }}
-            p-6">
+            ($booking->type === 'sick_call' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'))))) }}">
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="flex items-center">
-                        <h1 class="text-2xl font-bold">{{$booking->type === 'mass_intention' ? 'Mass Intention' : ucwords(str_replace('_', ' ', $booking->type))}} Service</h1>
-                        <span class="ml-3 px-3 py-1 text-xs font-medium rounded-full {{
+                    <div class="flex items-center mb-2">
+                        <h1 class="text-3xl font-extrabold tracking-tight">{{$booking->type === 'mass_intention' ? 'Mass Intention' : ucwords(str_replace('_', ' ', $booking->type))}} Service</h1>
+                        <span class="ml-4 px-4 py-1 text-sm font-bold rounded-full shadow-sm {{
                             $booking->status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
                             ($booking->status === 'payment_on_hold' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
                             ($booking->status === 'approved' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' :
@@ -97,15 +102,15 @@
                             {{ ucwords(str_replace('_', ' ', $booking->status)) }}
                         </span>
                     </div>
-                    <p class="text-lg mt-1">Ticket #{{ $booking->ticket_number }}</p>
-                    <p class="text-sm mt-1 text-gray-600 dark:text-gray-400">
+                    <p class="text-lg font-bold mt-1">Ticket #{{ $booking->ticket_number }}</p>
+                    <p class="text-base mt-1 text-gray-700 dark:text-gray-300 font-bold">
                         Requestor:
-                        <a href="{{ route('admin.users.show', $booking->user->id) }}" class="font-medium text-gray-900 dark:text-white hover:underline">
+                        <a href="{{ route('admin.users.show', $booking->user->id) }}" class="font-bold text-gray-900 dark:text-white hover:underline">
                             {{ $booking->user->name }}
                         </a>
                     </p>
                 </div>
-                <div class="w-16 h-16 rounded-full bg-white/90 dark:bg-gray-800/90 flex items-center justify-center shadow-md {{
+                <div class="w-20 h-20 rounded-full bg-white/90 dark:bg-gray-800/90 flex items-center justify-center shadow-lg {{
                     $booking->type === 'baptism' ? 'text-sky-600 dark:text-sky-400' :
                     ($booking->type === 'wedding' ? 'text-rose-600 dark:text-rose-400' :
                     ($booking->type === 'mass_intention' ? 'text-indigo-600 dark:text-indigo-400' :
@@ -118,7 +123,7 @@
                         ($booking->type === 'mass_intention' ? 'fa-church' :
                         ($booking->type === 'blessing' ? 'fa-hands-praying' :
                         ($booking->type === 'confirmation' ? 'fa-dove' :
-                        ($booking->type === 'sick_call' ? 'fa-hospital-user' : 'fa-circle'))))) }} text-3xl"></i>
+                        ($booking->type === 'sick_call' ? 'fa-hospital-user' : 'fa-circle'))))) }} text-4xl"></i>
                 </div>
             </div>
         </div>
@@ -126,16 +131,16 @@
         <!-- Tabbed interface for better organization -->
         <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
-                <button id="tab-overview" class="tab-button border-b-2 border-emerald-500 py-4 px-1 text-sm font-medium text-emerald-600 dark:text-emerald-400" aria-current="page">
+                <button id="tab-overview" class="tab-button border-b-2 border-emerald-500 py-4 px-1 text-sm font-bold text-emerald-600 dark:text-emerald-400" aria-current="page">
                     <i class="fas fa-info-circle mr-2"></i>Overview
                 </button>
-                <button id="tab-details" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600">
+                <button id="tab-details" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-bold text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600">
                     <i class="fas fa-list-ul mr-2"></i>Service Details
                 </button>
-                <button id="tab-documents" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600">
+                <button id="tab-documents" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-bold text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600">
                     <i class="fas fa-file-alt mr-2"></i>Documents
                 </button>
-                <button id="tab-payment" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600">
+                <button id="tab-payment" class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-bold text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600">
                     <i class="fas fa-credit-card mr-2"></i>Payment
                 </button>
                 <!-- Removed the Actions tab since we moved it to the header -->
@@ -148,7 +153,7 @@
             <div id="content-overview" class="tab-pane">
                 <!-- Status Cards - Redesigned as cards in a grid -->
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Booking Status</h2>
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Booking Status</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <!-- Status Card -->
                         <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-4">
@@ -161,7 +166,7 @@
                                             ($booking->status === 'payment_on_hold' ? 'bg-blue-500' :
                                             ($booking->status === 'approved' ? 'bg-emerald-500' : 'bg-red-500'))
                                         }}"></span>
-                                        <p class="text-gray-900 dark:text-white font-medium">
+                                        <p class="text-gray-900 dark:text-white font-bold">
                                             {{ ucwords(str_replace('_', ' ', $booking->status)) }}
                                         </p>
                                     </div>
@@ -190,7 +195,7 @@
                                             $booking->payment_status === 'pending' ? 'bg-yellow-500' :
                                             ($booking->payment_status === 'paid' ? 'bg-emerald-500' : 'bg-gray-500')
                                         }}"></span>
-                                        <p class="text-gray-900 dark:text-white font-medium">
+                                        <p class="text-gray-900 dark:text-white font-bold">
                                             {{ $booking->payment_status === 'pending' ? 'Payment Pending' :
                                                ($booking->payment_status === 'paid' ? 'Paid' : 'Not Paid') }}
                                         </p>
@@ -219,7 +224,7 @@
                                             $booking->verification_status === 'pending' ? 'bg-yellow-500' :
                                             ($booking->verification_status === 'verified' ? 'bg-emerald-500' : 'bg-red-500')
                                         }}"></span>
-                                        <p class="text-gray-900 dark:text-white font-medium">
+                                        <p class="text-gray-900 dark:text-white font-bold">
                                             {{ ucwords(str_replace('_', ' ', $booking->verification_status)) }}
                                         </p>
                                     </div>
@@ -241,7 +246,7 @@
 
                 <!-- Schedule Information - Enhanced with icons and better spacing -->
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Schedule Information</h2>
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Schedule Information</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex items-start">
                             <div class="flex-shrink-0 h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mr-4">
@@ -249,7 +254,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-600 dark:text-gray-400 text-sm">Date</p>
-                                <p class="text-gray-900 dark:text-white font-medium text-lg">{{ Carbon\Carbon::parse($booking->preferred_date)->format('F d, Y') }}</p>
+                                <p class="text-gray-900 dark:text-white font-bold text-lg">{{ Carbon\Carbon::parse($booking->preferred_date)->format('F d, Y') }}</p>
                             </div>
                         </div>
                         <div class="flex items-start">
@@ -258,7 +263,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-600 dark:text-gray-400 text-sm">Time</p>
-                                <p class="text-gray-900 dark:text-white font-medium text-lg">{{ Carbon\Carbon::parse($booking->preferred_time)->format('g:i A') }}</p>
+                                <p class="text-gray-900 dark:text-white font-bold text-lg">{{ Carbon\Carbon::parse($booking->preferred_time)->format('g:i A') }}</p>
                             </div>
                         </div>
                     </div>
@@ -272,7 +277,7 @@
                             <i class="fas fa-sticky-note text-lg"></i>
                         </div>
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Additional Notes</h2>
+                            <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-2">Additional Notes</h2>
                             <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                                 <p class="text-gray-700 dark:text-gray-300">{{ $booking->notes }}</p>
                             </div>
@@ -284,9 +289,9 @@
 
             <!-- Service Details Tab -->
             <div id="content-details" class="tab-pane hidden">
-                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="p-6">
                     <div class="flex items-center mb-6">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mr-4">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white mr-3 shadow-lg">
                             <i class="fas {{
                                 $booking->type === 'baptism' ? 'fa-water' :
                                 ($booking->type === 'wedding' ? 'fa-rings-wedding' :
@@ -295,69 +300,118 @@
                                 ($booking->type === 'confirmation' ? 'fa-dove' :
                                 ($booking->type === 'sick_call' ? 'fa-hospital-user' : 'fa-circle'))))) }} text-lg"></i>
                         </div>
-                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Service Details</h2>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ ucfirst(str_replace('_', ' ', $booking->type)) }} Details</h2>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Specific information for this service type</p>
+                        </div>
                     </div>
 
-                    <!-- Service-specific details with improved layout -->
+                    <!-- Service-specific details with enhanced visual separation -->
                     @if($booking->type === 'baptism' && $booking->baptismDetail)
-                        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-5">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Child's Name</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->baptismDetail->child_name }}</p>
+                        <div class="space-y-8">
+                            <!-- Child Information Section -->
+                            <div class="bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-900/10 dark:to-blue-900/10 rounded-xl p-6 border-l-4 border-sky-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-8 w-8 rounded-full bg-sky-500 flex items-center justify-center mr-3">
+                                        <i class="fas fa-baby text-white text-sm"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Child Information</h3>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Baptism Type</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ ucfirst($booking->baptismDetail->baptism_type) }}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">Child's Full Name</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->baptismDetail->child_name }}</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">Baptism Type</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200">
+                                                {{ ucfirst($booking->baptismDetail->baptism_type) }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">Date of Birth</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ Carbon\Carbon::parse($booking->baptismDetail->date_of_birth)->format('F d, Y') }}</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">Place of Birth</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->baptismDetail->place_of_birth }}</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider">Nationality</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->baptismDetail->nationality }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Birth</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ Carbon\Carbon::parse($booking->baptismDetail->date_of_birth)->format('F d, Y') }}</p>
+                            </div>
+
+                            <!-- Parents Information Section -->
+                            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10 rounded-xl p-6 border-l-4 border-emerald-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center mr-3">
+                                        <i class="fas fa-users text-white text-sm"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Parents Information</h3>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Place of Birth</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->baptismDetail->place_of_birth }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Father's Name</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->baptismDetail->father_name }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Mother's Name</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->baptismDetail->mother_name }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Nationality</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->baptismDetail->nationality }}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Father's Name</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->baptismDetail->father_name }}</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Mother's Name</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->baptismDetail->mother_name }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     @elseif($booking->type === 'wedding' && $booking->weddingDetail)
-                        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-5">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Groom's Name</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->weddingDetail->groom_name }}</p>
+                        <div class="space-y-8">
+                            <!-- Groom Information Section -->
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-xl p-6 border-l-4 border-blue-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center mr-3">
+                                        <i class="fas fa-male text-white text-sm"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Groom Information</h3>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Groom's Age</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->weddingDetail->groom_age }}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Full Name</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->weddingDetail->groom_name }}</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Age</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->weddingDetail->groom_age }} years old</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Religion</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->weddingDetail->groom_religion }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Groom's Religion</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->weddingDetail->groom_religion }}</p>
+                            </div>
+
+                            <!-- Bride Information Section -->
+                            <div class="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/10 dark:to-rose-900/10 rounded-xl p-6 border-l-4 border-pink-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-8 w-8 rounded-full bg-pink-500 flex items-center justify-center mr-3">
+                                        <i class="fas fa-female text-white text-sm"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Bride Information</h3>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Bride's Name</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->weddingDetail->bride_name }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Bride's Age</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->weddingDetail->bride_age }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Bride's Religion</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->weddingDetail->bride_religion }}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-wider">Full Name</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->weddingDetail->bride_name }}</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-wider">Age</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->weddingDetail->bride_age }} years old</p>
+                                    </div>
+                                    <div class="bg-white dark:bg-gray-800/50 rounded-lg p-4 shadow-sm">
+                                        <label class="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-wider">Religion</label>
+                                        <p class="mt-2 text-lg font-bold text-gray-900 dark:text-white">{{ $booking->weddingDetail->bride_religion }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -365,12 +419,12 @@
                         <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-5">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Mass Type</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->massIntentionDetail->mass_type }}</p>
+                                    <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">Mass Type</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->massIntentionDetail->mass_type }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Mass Names</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->massIntentionDetail->mass_names }}</p>
+                                    <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">Mass Names</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->massIntentionDetail->mass_names }}</p>
                                 </div>
                             </div>
                         </div>
@@ -379,11 +433,11 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Blessing Type</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->blessingDetail->blessing_type }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->blessingDetail->blessing_type }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Blessing Location</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->blessingDetail->blessing_location }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->blessingDetail->blessing_location }}</p>
                                 </div>
                             </div>
                         </div>
@@ -392,19 +446,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmand's Name</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->confirmationDetail->confirmand_name }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->confirmationDetail->confirmand_name }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Birth</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ Carbon\Carbon::parse($booking->confirmationDetail->confirmand_dob)->format('F d, Y') }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ Carbon\Carbon::parse($booking->confirmationDetail->confirmand_dob)->format('F d, Y') }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Baptism Place</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->confirmationDetail->baptism_place }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->confirmationDetail->baptism_place }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Baptism Date</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ Carbon\Carbon::parse($booking->confirmationDetail->baptism_date)->format('F d, Y') }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ Carbon\Carbon::parse($booking->confirmationDetail->baptism_date)->format('F d, Y') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -413,15 +467,15 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Patient's Name</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->sickCallDetail->patient_name }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->sickCallDetail->patient_name }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Patient's Address</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->sickCallDetail->patient_address }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->sickCallDetail->patient_address }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Patient's Condition</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->sickCallDetail->patient_condition }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->sickCallDetail->patient_condition }}</p>
                                 </div>
                             </div>
                         </div>
@@ -436,7 +490,7 @@
                         <div class="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mr-4">
                             <i class="fas fa-file-alt text-lg"></i>
                         </div>
-                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Uploaded Documents</h2>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">Uploaded Documents</h2>
                     </div>
 
                     @if($booking->documents->count() > 0)
@@ -447,7 +501,7 @@
                                     <i class="fas fa-file-alt"></i>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-gray-900 dark:text-white font-medium truncate">{{ ucwords(str_replace('_', ' ', $document->document_type)) }}</p>
+                                    <p class="text-gray-900 dark:text-white font-bold truncate">{{ ucwords(str_replace('_', ' ', $document->document_type)) }}</p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">Uploaded {{ $document->created_at->diffForHumans() }}</p>
                                 </div>
                                 <a href="{{ Storage::url($document->file_path) }}" target="_blank" class="ml-4 flex-shrink-0 p-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
@@ -461,7 +515,7 @@
                             <div class="mx-auto h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 mb-4">
                                 <i class="fas fa-file-alt text-2xl"></i>
                             </div>
-                            <h3 class="text-gray-500 dark:text-gray-400 text-lg font-medium">No Documents Uploaded</h3>
+                            <h3 class="text-gray-500 dark:text-gray-400 text-lg font-bold">No Documents Uploaded</h3>
                             <p class="text-gray-500 dark:text-gray-400 mt-1">There are no documents attached to this booking.</p>
                         </div>
                     @endif
@@ -475,7 +529,7 @@
                         <div class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 mr-4">
                             <i class="fas fa-credit-card text-lg"></i>
                         </div>
-                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Payment Information</h2>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">Payment Information</h2>
                     </div>
 
                     @if($booking->payment_status === 'paid')
@@ -483,25 +537,25 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Amount Paid</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium text-lg">₱{{ number_format($booking->price, 2) }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold text-lg">₱{{ number_format($booking->price, 2) }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Payment Date</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->paid_at ? Carbon\Carbon::parse($booking->paid_at)->format('F d, Y g:i A') : 'N/A' }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->paid_at ? Carbon\Carbon::parse($booking->paid_at)->format('F d, Y g:i A') : 'N/A' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Payment Method</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->payment_method ? ucwords(str_replace('_', ' ', $booking->payment_method)) : 'N/A' }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->payment_method ? ucwords(str_replace('_', ' ', $booking->payment_method)) : 'N/A' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Reference Number</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->reference_number ?? 'N/A' }}</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->reference_number ?? 'N/A' }}</p>
                                 </div>
                             </div>
 
                             @if($booking->payment_proof)
                                 <div class="mt-6 border-t border-gray-200 dark:border-gray-600 pt-6">
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Payment Proof</p>
+                                    <p class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3">Payment Proof</p>
                                     <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
                                         <a href="{{ asset('storage/' . $booking->payment_proof) }}" target="_blank" class="inline-block">
                                             <img src="{{ asset('storage/' . $booking->payment_proof) }}" alt="Payment Proof" class="max-h-64 rounded-lg shadow-sm mx-auto">
@@ -512,22 +566,22 @@
 
                             @if($booking->verification_status !== 'pending')
                                 <div class="mt-6 border-t border-gray-200 dark:border-gray-600 pt-6">
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Verification Details</p>
+                                    <p class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3">Verification Details</p>
                                     <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                                                <p class="mt-1 font-medium {{ $booking->verification_status === 'verified' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                                                <p class="mt-1 font-bold {{ $booking->verification_status === 'verified' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
                                                     {{ ucwords(str_replace('_', ' ', $booking->verification_status)) }}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">Verified By</p>
-                                                <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ optional($booking->verifiedBy)->name ?? 'N/A' }}</p>
+                                                <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ optional($booking->verifiedBy)->name ?? 'N/A' }}</p>
                                             </div>
                                             <div>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">Verified At</p>
-                                                <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->verified_at ? Carbon\Carbon::parse($booking->verified_at)->format('M d, Y g:i A') : 'N/A' }}</p>
+                                                <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->verified_at ? Carbon\Carbon::parse($booking->verified_at)->format('M d, Y g:i A') : 'N/A' }}</p>
                                             </div>
                                             @if($booking->verification_notes)
                                                 <div class="md:col-span-2">
@@ -545,7 +599,7 @@
                             <div class="mx-auto h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 mb-4">
                                 <i class="fas fa-credit-card text-2xl"></i>
                             </div>
-                            <h3 class="text-gray-500 dark:text-gray-400 text-lg font-medium">No Payment Information</h3>
+                            <h3 class="text-gray-500 dark:text-gray-400 text-lg font-bold">No Payment Information</h3>
                             <p class="text-gray-500 dark:text-gray-400 mt-1">This booking has not been paid for yet.</p>
                         </div>
                     @endif
