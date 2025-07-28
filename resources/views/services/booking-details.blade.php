@@ -323,8 +323,8 @@
                                 <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->sickCallDetail->patient_name }}</p>
                             </div>
                             <div>
-                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Patient's Address</p>
-                                <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->sickCallDetail->patient_address }}</p>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Location</p>
+                                <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $booking->sickCallDetail->location }}</p>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Patient's Condition</p>
@@ -489,7 +489,7 @@
             </a>
 
             @if($booking->status === 'pending' || $booking->status === 'payment_on_hold')
-            <button onclick="confirmCancel()" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            <button onclick="openCancelModal()" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                 <i class="fas fa-times mr-2"></i>
                 Cancel Booking
             </button>
@@ -515,14 +515,11 @@
             <p class="text-gray-700 dark:text-gray-300 mb-6">Are you sure you want to cancel this booking? This action cannot be undone.</p>
 
             <div class="flex justify-end gap-3">
-                <button onclick="closeCancelModal()" class="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                <button type="button" onclick="closeCancelModal()" class="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                     No, Keep Booking
                 </button>
-                {{-- Assuming you have a route like 'user.bookings.cancel' for users --}}
-                <form action="{{ route('bookings.cancel', $booking->id) }}" method="POST">
+                <form id="cancelForm" action="{{ route('bookings.cancel', $booking->id) }}" method="POST">
                     @csrf
-                    {{-- Use PUT or DELETE method based on your route definition --}}
-                    {{-- @method('DELETE') --}}
                     <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                         Yes, Cancel Booking
                     </button>
@@ -570,6 +567,15 @@
             });
         });
     });
+
+    function openCancelModal() {
+        document.getElementById('cancelModal').classList.remove('hidden');
+        document.getElementById('cancelModal').classList.add('flex');
+    }
+    function closeCancelModal() {
+        document.getElementById('cancelModal').classList.remove('flex');
+        document.getElementById('cancelModal').classList.add('hidden');
+    }
 </script>
 
 @endif

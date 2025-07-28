@@ -51,27 +51,53 @@
                     @csrf
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
-                        <select name="service_type" data-required class="w-full px-4 py-2 rounded-lg border border-gray-300" onchange="handleServiceTypeChange(this.value)">
-                            <option value="">Select a service</option>
-                            <option value="baptism" {{ session('booking_step1.service_type') == 'baptism' ? 'selected' : '' }}>Baptism - ₱1,000</option>
-                            <option value="wedding" {{ session('booking_step1.service_type') == 'wedding' ? 'selected' : '' }}>Wedding - ₱5,000</option>
-                            <option value="mass_intention" {{ session('booking_step1.service_type') == 'mass_intention' ? 'selected' : '' }}>Mass Intention - ₱500</option>
-                            <option value="blessing" {{ session('booking_step1.service_type') == 'blessing' ? 'selected' : '' }}>House/Car Blessing - ₱1,500</option>
-                            <option value="confirmation" {{ session('booking_step1.service_type') == 'confirmation' ? 'selected' : '' }}>Confirmation - ₱1,000</option>
-                            <option value="sick_call" {{ session('booking_step1.service_type') == 'sick_call' ? 'selected' : '' }}>Sick Call - ₱1,000</option>
-                        </select>
+                        @if(request('service_type') || session('booking_step1.service_type'))
+                            @php
+                                $selectedServiceType = request('service_type') ?? session('booking_step1.service_type');
+                                $serviceNames = [
+                                    'baptism' => 'Baptism - ₱1,000',
+                                    'wedding' => 'Wedding - ₱5,000',
+                                    'mass_intention' => 'Mass Intention - ₱500',
+                                    'blessing' => 'House/Car Blessing - ₱1,500',
+                                    'confirmation' => 'Confirmation - ₱1,000',
+                                    'sick_call' => 'Sick Call - ₱1,000'
+                                ];
+                            @endphp
+                            <!-- Display selected service as readonly text -->
+                            <div class="relative w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 font-medium">
+                                {{ $serviceNames[$selectedServiceType] ?? 'Unknown Service' }}
+                                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fas fa-lock" title="Service type is locked"></i>
+                                </span>
+                            </div>
+                            <!-- Hidden input to maintain the value -->
+                            <input type="hidden" name="service_type" value="{{ $selectedServiceType }}">
+                        @else
+                            <select name="service_type" data-required class="w-full px-4 py-2 rounded-lg border border-gray-300" onchange="handleServiceTypeChange(this.value)">
+                                <option value="">Select a service</option>
+                                <option value="baptism" {{ session('booking_step1.service_type') == 'baptism' ? 'selected' : '' }}>Baptism - ₱1,000</option>
+                                <option value="wedding" {{ session('booking_step1.service_type') == 'wedding' ? 'selected' : '' }}>Wedding - ₱5,000</option>
+                                <option value="mass_intention" {{ session('booking_step1.service_type') == 'mass_intention' ? 'selected' : '' }}>Mass Intention - ₱500</option>
+                                <option value="blessing" {{ session('booking_step1.service_type') == 'blessing' ? 'selected' : '' }}>House/Car Blessing - ₱1,500</option>
+                                <option value="confirmation" {{ session('booking_step1.service_type') == 'confirmation' ? 'selected' : '' }}>Confirmation - ₱1,000</option>
+                                <option value="sick_call" {{ session('booking_step1.service_type') == 'sick_call' ? 'selected' : '' }}>Sick Call - ₱1,000</option>
+                            </select>
+                        @endif
 
                         <!-- Remove the serviceInfoModal div and its related JavaScript -->
                         <script>
                             document.addEventListener('DOMContentLoaded', function() {
-                                const serviceType = '{{ request("service_type") }}';
+                                const serviceType = '{{ request("service_type") ?? session("booking_step1.service_type") }}';
                                 if (serviceType) {
-                                    // Set the select element's value
+                                    // If service type is pre-selected, show the appropriate form immediately
+                                    handleServiceTypeChange(serviceType);
+                                } else {
+                                    // Only set up the select handler if no service is pre-selected
                                     const serviceSelect = document.querySelector('select[name="service_type"]');
                                     if (serviceSelect) {
-                                        serviceSelect.value = serviceType;
-                                        // Trigger the change event to show the appropriate form
-                                        handleServiceTypeChange(serviceType);
+                                        serviceSelect.addEventListener('change', function() {
+                                            handleServiceTypeChange(this.value);
+                                        });
                                     }
                                 }
                             });

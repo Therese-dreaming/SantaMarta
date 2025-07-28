@@ -117,6 +117,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/services/booking/{booking}/details', [ServiceController::class, 'showBookingDetails'])->name('services.booking.details');
     Route::post('/bookings/{booking}/cancel', [ServiceController::class, 'cancel'])->name('bookings.cancel');
     Route::get('/bookings/{booking}/generate-certificate', [ServiceController::class, 'generateCertificate'])->name('bookings.generateCertificate');
+    Route::get('/test-email', [ServiceController::class, 'testEmail'])->name('test.email');
 
 });
 

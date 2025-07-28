@@ -269,6 +269,37 @@
                     </div>
                 </div>
 
+                <!-- Priest Assignment Information -->
+                @if($booking->status === 'approved' && $booking->priest_id)
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Assigned Priest</h2>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 mr-4">
+                            <i class="fas fa-user-tie text-lg"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">Officiating Priest</p>
+                            <p class="text-gray-900 dark:text-white font-bold text-lg">{{ $booking->priest->name }}</p>
+                            @if($booking->priest->specialization)
+                                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                                    <i class="fas fa-star mr-1"></i>{{ $booking->priest->specialization }}
+                                </p>
+                            @endif
+                            @if($booking->priest->phone)
+                                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                                    <i class="fas fa-phone mr-1"></i>{{ $booking->priest->phone }}
+                                </p>
+                            @endif
+                            @if($booking->priest->email)
+                                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                                    <i class="fas fa-envelope mr-1"></i>{{ $booking->priest->email }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <!-- Additional Notes (if any) -->
                 @if($booking->notes)
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -470,8 +501,8 @@
                                     <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->sickCallDetail->patient_name }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Patient's Address</p>
-                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->sickCallDetail->patient_address }}</p>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Location</p>
+                                    <p class="mt-1 text-gray-900 dark:text-white font-bold">{{ $booking->sickCallDetail->location }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Patient's Condition</p>

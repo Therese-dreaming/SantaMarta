@@ -14,6 +14,33 @@
                 @method('PUT')
                 <input type="hidden" name="verification_status" id="newVerificationStatusInput">
 
+                <!-- Priest Selection (only shown when approving) -->
+                <div id="priestSelectionDiv" class="space-y-2 hidden">
+                    <label for="newVerificationPriest" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-user-tie mr-2 text-emerald-600 dark:text-emerald-400"></i>
+                        Assign Priest
+                    </label>
+                    <select 
+                        id="newVerificationPriest" 
+                        name="priest_id" 
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                        <option value="">Select a priest...</option>
+                        @php
+                            $priests = \App\Models\Priest::where('availability_status', true)->orderBy('name')->get();
+                        @endphp
+                        @foreach($priests as $priest)
+                            <option value="{{ $priest->id }}">
+                                {{ $priest->name }}
+                                @if($priest->specialization)
+                                    - {{ $priest->specialization }}
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Required when approving the booking</p>
+                </div>
+
                 <div class="space-y-2">
                     <label for="newVerificationNotes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
                     <textarea
@@ -38,7 +65,7 @@
                         onclick="submitNewVerification('verified')"
                         class="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                     >
-                        Approve
+                        Approve & Assign
                     </button>
                 </div>
             </form>
@@ -66,10 +93,57 @@
     }
 
     function submitNewVerification(status) {
+        const priestSelectionDiv = document.getElementById('priestSelectionDiv');
+        const priestSelect = document.getElementById('newVerificationPriest');
+        
+        if (status === 'verified') {
+            // Show priest selection and make it required
+            priestSelectionDiv.classList.remove('hidden');
+            priestSelect.setAttribute('required', 'required');
+            
+            // Check if priest is selected
+            if (!priestSelect.value) {
+                alert('Please select a priest before approving the booking.');
+                return;
+            }
+        } else {
+            // Hide priest selection and remove required attribute
+            priestSelectionDiv.classList.add('hidden');
+            priestSelect.removeAttribute('required');
+            priestSelect.value = '';
+        }
+        
         document.getElementById('newVerificationStatusInput').value = status;
         const form = document.getElementById('newVerificationForm');
         
         // Use the form's submit method to ensure @method('PUT') is respected
         form.submit();
     }
+    
+    // Add event listener to show/hide priest selection when modal is opened
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click listeners to the approve/reject buttons to show/hide priest selection
+        const approveBtn = document.querySelector('button[onclick="submitNewVerification(\'verified\')"]');
+        const rejectBtn = document.querySelector('button[onclick="submitNewVerification(\'rejected\')"]');
+        
+        if (approveBtn) {
+            approveBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const priestSelectionDiv = document.getElementById('priestSelectionDiv');
+                priestSelectionDiv.classList.remove('hidden');
+                
+                // Wait a moment for the UI to update, then check if priest is selected
+                setTimeout(() => {
+                    submitNewVerification('verified');
+                }, 100);
+            });
+        }
+        
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                submitNewVerification('rejected');
+            });
+        }
+    });
 </script>

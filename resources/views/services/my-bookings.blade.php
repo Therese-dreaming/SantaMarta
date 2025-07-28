@@ -78,6 +78,10 @@
                             <span class="px-3 py-1.5 rounded-full text-sm font-medium bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:orange-red-300 border border-orange-200 dark:border-orange-800">
                                 Paid
                             </span>
+                            @elseif($booking->status === 'cancelled')
+                            <span class="px-3 py-1.5 rounded-full text-sm font-medium bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800">
+                                Cancelled
+                            </span>
                             @endif
                         </div>
                     </div>

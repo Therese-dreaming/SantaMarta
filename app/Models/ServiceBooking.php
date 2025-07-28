@@ -38,7 +38,8 @@ class ServiceBooking extends Model
         'approved_at',
         'approved_by',
         'cancelled_at',
-        'cancelled_by'
+        'cancelled_by',
+        'priest_id'
     ];
 
     public function user(): BelongsTo
@@ -87,6 +88,11 @@ class ServiceBooking extends Model
     public function documents()
     {
         return $this->hasMany(ServiceDocument::class, 'service_booking_id');
+    }
+
+    public function priest(): BelongsTo
+    {
+        return $this->belongsTo(Priest::class);
     }
 
     /**

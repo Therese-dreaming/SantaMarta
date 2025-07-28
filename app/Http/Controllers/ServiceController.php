@@ -13,6 +13,7 @@ use App\Models\ServiceDocument;
 use App\Notifications\ServiceBookingNotification;
 use App\Notifications\PaymentConfirmationNotification;
 use App\Notifications\PaymentRequestNotification;
+use App\Notifications\BookingCancelledConflictNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -64,8 +65,12 @@ class ServiceController extends Controller
             ],
             'sick_call' => [
                 'patient_name' => 'required|string|max:255',
-                'patient_address' => 'required|string',
+                'patient_age' => 'required|numeric',
                 'patient_condition' => 'required|string',
+                'location' => 'required|string|max:255',
+                'room_number' => 'required|string|max:255',
+                'contact_person' => 'required|string|max:255',
+                'emergency_contact' => 'required|string|max:255',
             ],
         ];
 
@@ -157,8 +162,12 @@ class ServiceController extends Controller
                 SickCallDetail::create([
                     'service_booking_id' => $serviceBooking->id,
                     'patient_name' => $request->patient_name,
-                    'patient_address' => $request->patient_address,
-                    'patient_condition' => $request->patient_condition
+                    'patient_age' => $request->patient_age,
+                    'patient_condition' => $request->patient_condition,
+                    'location' => $request->location,
+                    'room_number' => $request->room_number,
+                    'contact_person' => $request->contact_person,
+                    'emergency_contact' => $request->emergency_contact,
                 ]);
                 break;
         }
@@ -236,13 +245,27 @@ class ServiceController extends Controller
         return view('admin.bookings', compact('bookings', 'pendingCount', 'paymentHoldCount', 'verifyPaymentCount', 'approvedCount'));
     }
 
-    public function approve(ServiceBooking $booking)
+    public function approve(Request $request, ServiceBooking $booking)
     {
+        // Validate priest assignment
+        $request->validate([
+            'priest_id' => 'required|exists:priests,id'
+        ]);
+        
+        // Cancel conflicting bookings when directly approving a booking
+        $this->cancelConflictingBookings($booking);
+        
         $booking->update([
-            'status' => 'approved'
+            'status' => 'approved',
+            'priest_id' => $request->priest_id,
+            'approved_at' => now(),
+            'approved_by' => auth()->id()
         ]);
 
-        return redirect()->back()->with('success', 'Service booking has been approved successfully.');
+        // Get priest name for success message
+        $priest = \App\Models\Priest::find($request->priest_id);
+        
+        return redirect()->back()->with('success', 'Service booking has been approved successfully and assigned to ' . $priest->name . '. Conflicting bookings have been automatically cancelled.');
     }
 
     public function cancel(ServiceBooking $booking)
@@ -323,24 +346,108 @@ class ServiceController extends Controller
     public function verifyPayment(Request $request, ServiceBooking $booking)
     {
         // Validate request
-        $request->validate([
+        $validationRules = [
             'verification_status' => 'required|in:verified,rejected',
             'verification_notes' => 'nullable|string'
-        ]);
+        ];
+        
+        // Add priest validation only if status is verified
+        if ($request->verification_status === 'verified') {
+            $validationRules['priest_id'] = 'required|exists:priests,id';
+        }
+        
+        $request->validate($validationRules);
     
         $status = $request->verification_status === 'verified' ? 'approved' : 'cancelled';
         
-        // Update booking with verification details
-        $booking->update([
+        // If payment is verified (approved), cancel conflicting bookings
+        if ($request->verification_status === 'verified') {
+            $this->cancelConflictingBookings($booking);
+        }
+        
+        // Prepare update data
+        $updateData = [
             'status' => $status,
             'verification_status' => $request->verification_status,
             'verification_notes' => $request->verification_notes,
             'verified_at' => now(),
             'verified_by' => auth()->id()
-        ]);
+        ];
+        
+        // Add priest assignment if verified
+        if ($request->verification_status === 'verified') {
+            $updateData['priest_id'] = $request->priest_id;
+            $updateData['approved_at'] = now();
+            $updateData['approved_by'] = auth()->id();
+        }
+        
+        // Update booking with verification details
+        $booking->update($updateData);
     
-        return redirect()->back()->with('success', 'Payment verification status updated successfully.');
+        $message = $request->verification_status === 'verified' 
+            ? 'Payment verified and booking approved successfully. Priest assigned. Conflicting bookings have been automatically cancelled.' 
+            : 'Payment verification rejected successfully.';
+            
+    return redirect()->back()->with('success', $message);
     }
+    
+    /**
+     * Cancel other bookings with the same date and time when a booking is approved
+     */
+    private function cancelConflictingBookings(ServiceBooking $approvedBooking)
+    {
+        \Log::info('cancelConflictingBookings called for booking #' . $approvedBooking->ticket_number);
+        
+        // Find all other bookings with the same date and time that are not cancelled or rejected
+        $conflictingBookings = ServiceBooking::where('id', '!=', $approvedBooking->id)
+            ->where('preferred_date', $approvedBooking->preferred_date)
+            ->where('preferred_time', $approvedBooking->preferred_time)
+            ->whereNotIn('status', ['cancelled', 'rejected'])
+            ->with('user') // Load user relationship for notifications
+            ->get();
+            
+        \Log::info('Found ' . $conflictingBookings->count() . ' conflicting bookings');
+            
+        if ($conflictingBookings->count() > 0) {
+            // Update all conflicting bookings to cancelled status
+            ServiceBooking::where('id', '!=', $approvedBooking->id)
+                ->where('preferred_date', $approvedBooking->preferred_date)
+                ->where('preferred_time', $approvedBooking->preferred_time)
+                ->whereNotIn('status', ['cancelled', 'rejected'])
+                ->update([
+                    'status' => 'cancelled',
+                    'cancelled_at' => now(),
+                    'cancelled_by' => auth()->id(),
+                    'verification_notes' => 'Automatically cancelled due to scheduling conflict with approved booking #' . $approvedBooking->ticket_number
+                ]);
+                
+            // Send notifications to affected users
+            foreach ($conflictingBookings as $conflictingBooking) {
+                \Log::info('Processing conflicting booking #' . $conflictingBooking->ticket_number . ' for user: ' . $conflictingBooking->user->email);
+                
+                try {
+                    // Send cancellation notification
+                    $conflictingBooking->user->notify(
+                        new BookingCancelledConflictNotification(
+                            $conflictingBooking,
+                            $approvedBooking->ticket_number
+                        )
+                    );
+                    
+                    \Log::info('Successfully sent cancellation notification to user: ' . $conflictingBooking->user->email . ' for booking #' . $conflictingBooking->ticket_number);
+                } catch (\Exception $e) {
+                    // Log the error but don't fail the main operation
+                    \Log::error('Failed to send cancellation notification for booking #' . $conflictingBooking->ticket_number . ': ' . $e->getMessage());
+                    \Log::error('Exception trace: ' . $e->getTraceAsString());
+                }
+            }
+            
+            \Log::info('Cancelled ' . $conflictingBookings->count() . ' conflicting bookings for approved booking #' . $approvedBooking->ticket_number);
+        } else {
+            \Log::info('No conflicting bookings found for booking #' . $approvedBooking->ticket_number);
+        }
+    }
+    
     public function holdForPayment(ServiceBooking $booking)
     {
         $booking->update([
@@ -533,8 +640,12 @@ class ServiceController extends Controller
                 SickCallDetail::create([
                     'service_booking_id' => $booking->id,
                     'patient_name' => $step1['patient_name'],
-                    'patient_address' => $step1['patient_address'],
-                    'patient_condition' => $step1['patient_condition']
+                    'patient_age' => $step1['patient_age'],
+                    'patient_condition' => $step1['patient_condition'],
+                    'location' => $step1['location'],
+                    'room_number' => $step1['room_number'],
+                    'contact_person' => $step1['contact_person'],
+                    'emergency_contact' => $step1['emergency_contact']
                 ]);
                 break;
         }
@@ -799,8 +910,8 @@ class ServiceController extends Controller
 
 public function adminShowBooking(ServiceBooking $booking)
 {
-    // Load the documents relationship
-    $booking->load('documents');
+    // Load the documents relationship and priest relationship
+    $booking->load(['documents', 'priest']);
 
     // Load the appropriate details based on booking type
     $details = null;
@@ -835,7 +946,7 @@ public function updateAdminNotes(Request $request, ServiceBooking $booking)
     ]);
     
     return redirect()->back()->with('success', 'Admin notes updated successfully.');
-}
+    }
 
 public function generateCertificate(ServiceBooking $booking)
 {
@@ -908,4 +1019,22 @@ public function showBookingDetails(ServiceBooking $booking)
 
     return view('services.booking-details', compact('booking'));
 }
+
+    /**
+     * Test email configuration
+     */
+    public function testEmail()
+    {
+        try {
+            \Mail::raw('Test email from Laravel Santa Marta', function($message) {
+                $message->to('kannakkura@gmail.com')
+                        ->subject('Test Email - Santa Marta Parish');
+            });
+            
+            return response()->json(['success' => true, 'message' => 'Test email sent successfully']);
+        } catch (\Exception $e) {
+            \Log::error('Email test failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Email test failed: ' . $e->getMessage()]);
+        }
+    }
 }
